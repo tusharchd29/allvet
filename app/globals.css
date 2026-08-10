@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #13322b;
+  --ink-soft: #1d4a44;
+  --teal: #028090;
+  --seafoam: #00a896;
+  --mint: #02c39a;
+  --offwhite: #f4f9f8;
+  --muted: #6b7c79;
+  --border: #d8e8e5;
+  --danger: #c0392b;
+  --warn: #b8860b;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-teal: var(--teal);
+  --color-seafoam: var(--seafoam);
+  --color-mint: var(--mint);
+  --color-offwhite: var(--offwhite);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-danger: var(--danger);
+  --color-warn: var(--warn);
+  --font-display: Georgia, "Times New Roman", ui-serif, serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+  background: var(--offwhite);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Status pill colors - reused everywhere an order status appears */
+.status-pending { background: #eef2f1; color: var(--muted); }
+.status-confirmed { background: #e6f4f6; color: var(--teal); }
+.status-dispatched { background: #dcf0ec; color: var(--ink-soft); }
+.status-fulfilled { background: #d7f7ee; color: #017a5c; }
