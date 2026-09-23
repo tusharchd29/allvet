@@ -10,7 +10,7 @@ export function MobileNav() {
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-[var(--border)] pb-[env(safe-area-inset-bottom)]">
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-6">
         {MOBILE_PRIMARY.map((item) => {
           const active =
             pathname === item.href ||

@@ -12,12 +12,19 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { PhotoField } from "@/components/PhotoField";
 import { PhotoThumbs } from "@/components/PhotoThumbs";
 import { getPhotosForEntities } from "@/lib/photos";
+import { parseDateRange } from "@/lib/date-range";
+import { DateRangeFilter } from "@/components/DateRangeFilter";
 
 export const dynamic = "force-dynamic";
 
-export default async function ExpensesPage() {
+export default async function ExpensesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
+  const range = parseDateRange(await searchParams);
 
   const repId = getRepScope(session);
   const query = supabaseAdmin
@@ -26,6 +33,8 @@ export default async function ExpensesPage() {
     .order("expense_date", { ascending: false })
     .limit(50);
   if (repId) query.eq("rep_id", repId);
+  if (range.from) query.gte("expense_date", range.from);
+  if (range.to) query.lte("expense_date", range.to);
   const { data: expenses } = await query;
   const photosByExpense = await getPhotosForEntities(
     "expense",
@@ -35,6 +44,8 @@ export default async function ExpensesPage() {
   return (
     <div>
       <PageHeader title="Expenses" subtitle="Field expense claims" />
+
+      <DateRangeFilter />
 
       <Card className="mb-6">
         <div className="font-medium text-[var(--ink)] mb-3">Log an expense</div>

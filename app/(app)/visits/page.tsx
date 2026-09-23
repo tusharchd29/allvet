@@ -11,12 +11,19 @@ import { EditableCard } from "../_shared/EditableCard";
 import { formatDate } from "@/lib/utils";
 import { getPhotosForEntities } from "@/lib/photos";
 import { PhotoThumbs } from "@/components/PhotoThumbs";
+import { parseDateRange } from "@/lib/date-range";
+import { DateRangeFilter } from "@/components/DateRangeFilter";
 
 export const dynamic = "force-dynamic";
 
-export default async function VisitsPage() {
+export default async function VisitsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
+  const range = parseDateRange(await searchParams);
 
   const repId = getRepScope(session);
   const query = supabaseAdmin
@@ -25,6 +32,8 @@ export default async function VisitsPage() {
     .order("visit_date", { ascending: false })
     .limit(50);
   if (repId) query.eq("rep_id", repId);
+  if (range.from) query.gte("visit_date", range.from);
+  if (range.to) query.lte("visit_date", range.to);
   const { data: visits } = await query;
   const photosByVisit = await getPhotosForEntities(
     "visit",
@@ -42,6 +51,8 @@ export default async function VisitsPage() {
           </Link>
         }
       />
+
+      <DateRangeFilter />
 
       {!visits || visits.length === 0 ? (
         <Card>

@@ -15,17 +15,24 @@ import { StatusPill } from "@/components/StatusPill";
 import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/icon";
 import { formatCurrency, formatDate, ZONE_LABEL, type Zone } from "@/lib/utils";
+import { parseDateRange } from "@/lib/date-range";
+import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { redirect } from "next/navigation";
 import { MapView } from "../map/MapView";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
+  const range = parseDateRange(await searchParams);
 
   const [stats, activity, dues, mapCustomers, zoneBreakdown] = await Promise.all([
-    getDashboardStats(session),
+    getDashboardStats(session, range),
     getRecentActivity(session, 6),
     getPaymentDues(session),
     getMapCustomers(session),
@@ -42,6 +49,8 @@ export default async function DashboardPage() {
             : "Here's your day at a glance"
         }
       />
+
+      <DateRangeFilter />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <StatCard label="Customers" value={String(stats.customersCount)} icon="users" tone="teal" />

@@ -1,22 +1,28 @@
 import { supabaseAdmin } from "./supabase-admin";
 import type { Session } from "./session";
+import type { DateRange } from "./date-range";
+import { dayStart, dayEnd } from "./date-range";
 
 export function getRepScope(session: Session) {
   return session.role === "owner" ? null : session.userId;
 }
 
-export async function getDashboardStats(session: Session) {
+export async function getDashboardStats(session: Session, range?: DateRange) {
   const repId = getRepScope(session);
 
   const visitsQuery = supabaseAdmin
     .from("av_visits")
     .select("*", { count: "exact", head: true });
   if (repId) visitsQuery.eq("rep_id", repId);
+  if (range?.from) visitsQuery.gte("visit_date", range.from);
+  if (range?.to) visitsQuery.lte("visit_date", range.to);
 
   const ordersQuery = supabaseAdmin
     .from("av_orders")
     .select("id, status, amount, rep_id");
   if (repId) ordersQuery.eq("rep_id", repId);
+  if (range?.from) ordersQuery.gte("created_at", dayStart(range.from));
+  if (range?.to) ordersQuery.lte("created_at", dayEnd(range.to));
 
   const targetsQuery = supabaseAdmin.from("av_targets").select("*");
   if (repId) targetsQuery.eq("rep_id", repId);
@@ -151,6 +157,80 @@ export async function getZoneBreakdown(session: Session) {
     counts[z && z in counts ? z : "unassigned"] += 1;
   }
   return counts;
+}
+
+export type RepReconciliation = {
+  repId: string;
+  name: string;
+  advanced: number;
+  spent: number;
+  balance: number;
+};
+
+/**
+ * Cash advances given to reps (av_rep_advances) vs. what they've actually
+ * logged in av_expenses — the balance is what's left of the advance
+ * (positive) or what the rep is owed back (negative), all-time. Owner sees
+ * every rep; a rep sees only their own row.
+ */
+export async function getRepAdvanceReconciliation(session: Session): Promise<{
+  reps: RepReconciliation[];
+  entries: Array<{
+    id: string;
+    rep_id: string;
+    amount: number;
+    purpose: string | null;
+    given_at: string;
+    repName: string;
+  }>;
+}> {
+  const repId = getRepScope(session);
+
+  const advancesQuery = supabaseAdmin
+    .from("av_rep_advances")
+    .select("id, rep_id, amount, purpose, given_at, av_users(name)")
+    .order("given_at", { ascending: false });
+  if (repId) advancesQuery.eq("rep_id", repId);
+
+  const expensesQuery = supabaseAdmin.from("av_expenses").select("rep_id, amount");
+  if (repId) expensesQuery.eq("rep_id", repId);
+
+  const [{ data: advances }, { data: expenses }] = await Promise.all([advancesQuery, expensesQuery]);
+
+  const advancedByRep = new Map<string, number>();
+  for (const a of advances ?? []) {
+    advancedByRep.set(a.rep_id, (advancedByRep.get(a.rep_id) ?? 0) + a.amount);
+  }
+  const spentByRep = new Map<string, number>();
+  for (const e of expenses ?? []) {
+    spentByRep.set(e.rep_id, (spentByRep.get(e.rep_id) ?? 0) + e.amount);
+  }
+
+  let reps: RepReconciliation[];
+  if (session.role === "owner") {
+    const { data: users } = await supabaseAdmin.from("av_users").select("id, name").eq("role", "rep");
+    reps = (users ?? []).map((u) => {
+      const advanced = advancedByRep.get(u.id) ?? 0;
+      const spent = spentByRep.get(u.id) ?? 0;
+      return { repId: u.id, name: u.name, advanced, spent, balance: advanced - spent };
+    });
+  } else {
+    const advanced = advancedByRep.get(session.userId) ?? 0;
+    const spent = spentByRep.get(session.userId) ?? 0;
+    reps = [{ repId: session.userId, name: session.name, advanced, spent, balance: advanced - spent }];
+  }
+
+  const entries = (advances ?? []).map((a) => ({
+    id: a.id as string,
+    rep_id: a.rep_id as string,
+    amount: a.amount as number,
+    purpose: a.purpose as string | null,
+    given_at: a.given_at as string,
+    // @ts-expect-error joined relation
+    repName: (a.av_users?.name as string) ?? "—",
+  }));
+
+  return { reps, entries };
 }
 
 export async function getRecentActivity(session: Session, limit = 8) {

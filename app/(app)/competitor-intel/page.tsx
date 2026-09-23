@@ -23,7 +23,7 @@ export default async function CompetitorIntelPage() {
 
   const intelQuery = supabaseAdmin
     .from("av_competitor_intel")
-    .select("id, competitor_name, notes, created_at, av_customers(name)")
+    .select("id, competitor_name, competitor_product, notes, created_at, av_customers(name)")
     .order("created_at", { ascending: false })
     .limit(30);
   if (repId) intelQuery.eq("rep_id", repId);
@@ -51,11 +51,23 @@ export default async function CompetitorIntelPage() {
               ))}
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-[var(--ink)] mb-1">
-              Competitor
-            </label>
-            <input name="competitor_name" required className="input-field" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+                Competitor company
+              </label>
+              <input name="competitor_name" required className="input-field" placeholder="e.g. VetCorp" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+                Their product
+              </label>
+              <input
+                name="competitor_product"
+                className="input-field"
+                placeholder="e.g. Calcium Plus"
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">Notes</label>
@@ -77,14 +89,20 @@ export default async function CompetitorIntelPage() {
               table="av_competitor_intel"
               id={i.id}
               revalidate={["/competitor-intel"]}
-              initialValues={{ competitor_name: i.competitor_name, notes: i.notes }}
+              initialValues={{
+                competitor_name: i.competitor_name,
+                competitor_product: i.competitor_product,
+                notes: i.notes,
+              }}
               fields={[
-                { name: "competitor_name", label: "Competitor", type: "text" },
+                { name: "competitor_name", label: "Competitor company", type: "text" },
+                { name: "competitor_product", label: "Their product", type: "text" },
                 { name: "notes", label: "Notes", type: "textarea" },
               ]}
             >
               <div className="font-medium text-[var(--ink)]">
-                {i.competitor_name} ·{" "}
+                {i.competitor_name}
+                {i.competitor_product ? ` — ${i.competitor_product}` : ""} ·{" "}
                 {/* @ts-expect-error joined relation */}
                 {i.av_customers?.name}
               </div>

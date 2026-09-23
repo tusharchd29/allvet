@@ -11,6 +11,7 @@ export async function createCompetitorIntel(formData: FormData) {
 
   const customer_id = String(formData.get("customer_id") || "");
   const competitor_name = String(formData.get("competitor_name") || "").trim();
+  const competitor_product = String(formData.get("competitor_product") || "").trim() || null;
   const notes = String(formData.get("notes") || "").trim() || null;
 
   if (!customer_id || !competitor_name) {
@@ -21,6 +22,7 @@ export async function createCompetitorIntel(formData: FormData) {
     customer_id,
     rep_id: session.userId,
     competitor_name,
+    competitor_product,
     notes,
   });
 

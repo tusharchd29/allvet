@@ -31,6 +31,7 @@ export const MOBILE_PRIMARY: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: "layout-dashboard" },
   { href: "/visits", label: "Visits", icon: "map-pin" },
   { href: "/orders", label: "Orders", icon: "package" },
+  { href: "/expenses", label: "Expenses", icon: "receipt" },
   { href: "/customers", label: "Customers", icon: "users" },
   { href: "/more", label: "More", icon: "menu" },
 ];

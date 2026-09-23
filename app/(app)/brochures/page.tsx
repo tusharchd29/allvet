@@ -32,8 +32,22 @@ export default async function BrochuresPage() {
               <input name="title" required className="input-field" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-[var(--ink)] mb-1">Link</label>
-              <input name="url" required className="input-field" placeholder="https://..." />
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+                Upload file (PDF, JPEG, PNG, or WEBP)
+              </label>
+              <input
+                type="file"
+                name="file"
+                accept="application/pdf,image/jpeg,image/png,image/webp"
+                className="input-field file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[var(--teal)]/10 file:text-[var(--teal)] file:text-sm file:font-medium file:cursor-pointer"
+              />
+              <p className="text-xs text-[var(--muted)] mt-1">Up to 20 MB.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+                Or paste a link instead
+              </label>
+              <input name="url" className="input-field" placeholder="https://..." />
             </div>
             <SubmitButton>Save</SubmitButton>
           </form>

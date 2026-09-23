@@ -9,12 +9,19 @@ import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/icon";
 import { OrderRow } from "./OrderRow";
 import type { OrderStatus } from "@/lib/utils";
+import { parseDateRange, dayStart, dayEnd } from "@/lib/date-range";
+import { DateRangeFilter } from "@/components/DateRangeFilter";
 
 export const dynamic = "force-dynamic";
 
-export default async function OrdersPage() {
+export default async function OrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
+  const range = parseDateRange(await searchParams);
 
   const repId = getRepScope(session);
   const query = supabaseAdmin
@@ -25,6 +32,8 @@ export default async function OrdersPage() {
     .order("created_at", { ascending: false })
     .limit(80);
   if (repId) query.eq("rep_id", repId);
+  if (range.from) query.gte("created_at", dayStart(range.from));
+  if (range.to) query.lte("created_at", dayEnd(range.to));
   const { data: orders } = await query;
 
   const orderIds = (orders ?? []).map((o) => o.id);
@@ -53,6 +62,8 @@ export default async function OrdersPage() {
           </Link>
         }
       />
+
+      <DateRangeFilter />
 
       {!orders || orders.length === 0 ? (
         <Card>
