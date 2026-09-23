@@ -9,6 +9,9 @@ import { EditableCard } from "../_shared/EditableCard";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { createExpense } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { PhotoField } from "@/components/PhotoField";
+import { PhotoThumbs } from "@/components/PhotoThumbs";
+import { getPhotosForEntities } from "@/lib/photos";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +27,10 @@ export default async function ExpensesPage() {
     .limit(50);
   if (repId) query.eq("rep_id", repId);
   const { data: expenses } = await query;
+  const photosByExpense = await getPhotosForEntities(
+    "expense",
+    (expenses ?? []).map((e) => e.id),
+  );
 
   return (
     <div>
@@ -59,6 +66,7 @@ export default async function ExpensesPage() {
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">Note</label>
             <input name="note" className="input-field" placeholder="Optional" />
           </div>
+          <PhotoField label="Receipt photo (optional)" />
           <SubmitButton>Add expense</SubmitButton>
         </form>
       </Card>
@@ -98,6 +106,7 @@ export default async function ExpensesPage() {
                     <> · {e.av_users?.name}</>
                   )}
                 </div>
+                <PhotoThumbs photos={photosByExpense.get(e.id)} />
               </div>
               <div className="font-medium text-[var(--ink)]">{formatCurrency(e.amount)}</div>
             </EditableCard>

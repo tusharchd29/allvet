@@ -8,6 +8,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { TravelRow } from "./TravelRow";
 import { createTravelLog } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { PhotoField } from "@/components/PhotoField";
+import { getPhotosForEntities } from "@/lib/photos";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,10 @@ export default async function TravelPage() {
     .limit(30);
   if (repId) query.eq("rep_id", repId);
   const { data: logs } = await query;
+  const photosByLog = await getPhotosForEntities(
+    "travel_log",
+    (logs ?? []).map((l) => l.id),
+  );
 
   return (
     <div>
@@ -54,6 +60,7 @@ export default async function TravelPage() {
               <input name="end_km" type="number" step="0.1" required className="input-field" />
             </div>
           </div>
+          <PhotoField label="Odometer photo (optional)" />
           <SubmitButton>Save</SubmitButton>
         </form>
       </Card>
@@ -77,6 +84,7 @@ export default async function TravelPage() {
                 repName: l.av_users?.name,
               }}
               showRep={session.role === "owner"}
+              photos={photosByLog.get(l.id)}
             />
           ))}
         </div>

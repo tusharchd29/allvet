@@ -7,6 +7,7 @@ import { Card } from "@/components/Card";
 import { LocationCapture } from "@/components/LocationCapture";
 import { createVisit } from "../actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { PhotoField } from "@/components/PhotoField";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,7 @@ export default async function NewVisitPage() {
             <input type="date" name="next_visit_date" className="input-field" />
           </div>
           <LocationCapture label="Visit location" />
+          <PhotoField />
           <SubmitButton>Save visit</SubmitButton>
         </form>
       </Card>

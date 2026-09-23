@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getSession } from "@/lib/session";
+import { attachPhotoIfPresent } from "@/lib/photos";
 
 export async function createVisit(formData: FormData) {
   const session = await getSession();
@@ -24,19 +25,25 @@ export async function createVisit(formData: FormData) {
 
   if (!customer_id) throw new Error("Customer is required");
 
-  const { error } = await supabaseAdmin.from("av_visits").insert({
-    customer_id,
-    rep_id: session.userId,
-    visit_date,
-    purpose,
-    discussion_summary,
-    follow_up_required,
-    next_visit_date,
-    latitude,
-    longitude,
-  });
+  const { data: inserted, error } = await supabaseAdmin
+    .from("av_visits")
+    .insert({
+      customer_id,
+      rep_id: session.userId,
+      visit_date,
+      purpose,
+      discussion_summary,
+      follow_up_required,
+      next_visit_date,
+      latitude,
+      longitude,
+    })
+    .select("id")
+    .single();
 
   if (error) throw new Error(error.message);
+
+  await attachPhotoIfPresent(formData, "photo", "visit", inserted.id, session.userId);
 
   revalidatePath("/visits");
   redirect("/visits");

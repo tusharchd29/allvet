@@ -9,6 +9,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/icon";
 import { EditableCard } from "../_shared/EditableCard";
 import { formatDate } from "@/lib/utils";
+import { getPhotosForEntities } from "@/lib/photos";
+import { PhotoThumbs } from "@/components/PhotoThumbs";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +26,10 @@ export default async function VisitsPage() {
     .limit(50);
   if (repId) query.eq("rep_id", repId);
   const { data: visits } = await query;
+  const photosByVisit = await getPhotosForEntities(
+    "visit",
+    (visits ?? []).map((v) => v.id),
+  );
 
   return (
     <div>
@@ -73,6 +79,7 @@ export default async function VisitsPage() {
                 <div className="text-sm text-[var(--muted)]">
                   {v.purpose ?? "Visit"} · {formatDate(v.visit_date)}
                 </div>
+                <PhotoThumbs photos={photosByVisit.get(v.id)} />
               </div>
               {v.follow_up_required && (
                 <span className="status-pending px-2.5 py-1 rounded-full text-xs font-semibold">

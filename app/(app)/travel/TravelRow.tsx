@@ -5,6 +5,8 @@ import { Card } from "@/components/Card";
 import { Icon } from "@/components/icon";
 import { formatDate } from "@/lib/utils";
 import { updateTravelLog } from "./actions";
+import { PhotoThumbs } from "@/components/PhotoThumbs";
+import type { EntityPhoto } from "@/lib/photos";
 
 export type TravelLog = {
   id: string;
@@ -15,7 +17,15 @@ export type TravelLog = {
   repName?: string | null;
 };
 
-export function TravelRow({ log, showRep }: { log: TravelLog; showRep: boolean }) {
+export function TravelRow({
+  log,
+  showRep,
+  photos,
+}: {
+  log: TravelLog;
+  showRep: boolean;
+  photos?: EntityPhoto[];
+}) {
   const [editing, setEditing] = useState(false);
   const [travelDate, setTravelDate] = useState(log.travel_date);
   const [startKm, setStartKm] = useState(String(log.start_km));
@@ -47,6 +57,7 @@ export function TravelRow({ log, showRep }: { log: TravelLog; showRep: boolean }
           <div className="text-sm text-[var(--muted)]">
             {startKm} → {endKm} km{showRep && log.repName ? ` · ${log.repName}` : ""}
           </div>
+          <PhotoThumbs photos={photos} />
         </div>
         <div className="flex items-center gap-3">
           <div className="font-medium text-[var(--ink)]">{distance} km</div>
