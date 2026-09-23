@@ -12,6 +12,12 @@ import { useActionFormPending } from "./ActionForm";
  * upload apart from a hung one — this shows the picked file's name/size up
  * front and an explicit "don't close this" notice while the surrounding
  * form is submitting, instead of a silent file input.
+ *
+ * Deliberately has no `capture` attribute: with one set, several mobile
+ * browsers (notably iOS Safari) skip the normal "Photo Library / Take
+ * Photo / Choose File" picker and jump straight to the camera, so a rep
+ * uploading a receipt or an already-taken photo has no way to pick from
+ * their gallery. Leaving `capture` off keeps both options.
  */
 export function PhotoField({ label = "Photo (optional)" }: { label?: string }) {
   const [picked, setPicked] = useState<{ name: string; size: number } | null>(null);
@@ -24,7 +30,6 @@ export function PhotoField({ label = "Photo (optional)" }: { label?: string }) {
         type="file"
         name="photo"
         accept="image/jpeg,image/png,image/webp,image/heic"
-        capture="environment"
         disabled={pending}
         onChange={(e) => {
           const f = e.target.files?.[0];

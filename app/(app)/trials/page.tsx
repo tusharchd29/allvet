@@ -20,7 +20,10 @@ export default async function TrialsPage() {
   const repId = getRepScope(session);
   const customersQuery = supabaseAdmin.from("av_customers").select("id, name").order("name");
   if (repId) customersQuery.eq("rep_id", repId);
-  const { data: customers } = await customersQuery;
+  const [{ data: customers }, { data: catalogProducts }] = await Promise.all([
+    customersQuery,
+    supabaseAdmin.from("av_products").select("name").eq("active", true).order("name"),
+  ]);
 
   const trialsQuery = supabaseAdmin
     .from("av_product_trials")
@@ -56,7 +59,18 @@ export default async function TrialsPage() {
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">
               Product
             </label>
-            <input name="product" required className="input-field" />
+            <input
+              name="product"
+              required
+              className="input-field"
+              list="trial-products"
+              placeholder="Type or pick from the catalog"
+            />
+            <datalist id="trial-products">
+              {(catalogProducts ?? []).map((p) => (
+                <option key={p.name} value={p.name} />
+              ))}
+            </datalist>
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">Date</label>

@@ -42,6 +42,14 @@ export default async function ExpensesPage({
     (expenses ?? []).map((e) => e.id),
   );
 
+  // Suggest previously used categories rather than maintaining a separate
+  // catalog table for something this small — every rep's own history (or
+  // everyone's, for the owner) becomes the dropdown.
+  const categoriesQuery = supabaseAdmin.from("av_expenses").select("category");
+  if (repId) categoriesQuery.eq("rep_id", repId);
+  const { data: categoryRows } = await categoriesQuery;
+  const categories = Array.from(new Set((categoryRows ?? []).map((c) => c.category))).sort();
+
   return (
     <div>
       <PageHeader title="Expenses" subtitle="Field expense claims" />
@@ -56,7 +64,18 @@ export default async function ExpensesPage({
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">
                 Category
               </label>
-              <input name="category" required className="input-field" placeholder="e.g. Fuel" />
+              <input
+                name="category"
+                required
+                className="input-field"
+                placeholder="e.g. Fuel"
+                list="expense-categories"
+              />
+              <datalist id="expense-categories">
+                {categories.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">

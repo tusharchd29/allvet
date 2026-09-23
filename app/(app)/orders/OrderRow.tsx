@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { StatusPill } from "@/components/StatusPill";
 import { Icon } from "@/components/icon";
 import { formatCurrency, formatDate, ageingLabel, type OrderStatus } from "@/lib/utils";
-import { advanceOrderStatus, updateOrderItems } from "./actions";
+import { advanceOrderStatus, revertOrderStatus, updateOrderItems } from "./actions";
 import { updateEntry } from "../_shared/actions";
 import { OrderItemsField, type CatalogProduct } from "./OrderItemsField";
 
@@ -14,6 +14,12 @@ const NEXT_LABEL: Record<OrderStatus, string | null> = {
   confirmed: "Mark dispatched",
   dispatched: "Mark fulfilled",
   fulfilled: null,
+};
+const PREV_LABEL: Record<OrderStatus, string | null> = {
+  pending: null,
+  confirmed: "Move back to pending",
+  dispatched: "Move back to confirmed",
+  fulfilled: "Move back to dispatched",
 };
 
 type Order = {
@@ -63,6 +69,21 @@ export function OrderRow({
           fulfilled: "fulfilled",
         };
         setStatus(nextMap[status]);
+      }
+    });
+  }
+
+  function revert() {
+    startTransition(async () => {
+      const result = await revertOrderStatus(order.id, status);
+      if (result.ok) {
+        const prevMap: Record<OrderStatus, OrderStatus> = {
+          pending: "pending",
+          confirmed: "pending",
+          dispatched: "confirmed",
+          fulfilled: "dispatched",
+        };
+        setStatus(prevMap[status]);
       }
     });
   }
@@ -212,6 +233,16 @@ export function OrderRow({
             className="btn-secondary text-xs px-3 py-1.5 whitespace-nowrap"
           >
             {pending ? "Updating…" : label}
+          </button>
+        )}
+        {PREV_LABEL[status] && (
+          <button
+            type="button"
+            onClick={revert}
+            disabled={pending}
+            className="text-xs text-[var(--muted)] underline whitespace-nowrap"
+          >
+            {PREV_LABEL[status]}
           </button>
         )}
       </div>

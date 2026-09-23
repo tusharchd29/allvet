@@ -43,6 +43,17 @@ create table if not exists av_customers (
   created_at timestamptz not null default now()
 );
 
+-- Additional named people at a customer (owner, purchase manager, etc.) —
+-- av_customers.phone stays as the primary/general number.
+create table if not exists av_customer_contacts (
+  id uuid primary key default gen_random_uuid(),
+  customer_id uuid not null references av_customers(id) on delete cascade,
+  name text not null,
+  role text,
+  phone text,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists av_visits (
   id uuid primary key default gen_random_uuid(),
   customer_id uuid not null references av_customers(id) on delete cascade,
@@ -266,6 +277,7 @@ create table if not exists av_rep_claims (
   resolved_at timestamptz
 );
 
+create index if not exists idx_av_customer_contacts_customer on av_customer_contacts(customer_id);
 create index if not exists idx_av_customers_rep on av_customers(rep_id);
 create index if not exists idx_av_visits_rep on av_visits(rep_id);
 create index if not exists idx_av_visits_customer on av_visits(customer_id);

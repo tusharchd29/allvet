@@ -201,3 +201,41 @@ export async function advanceOrderStatus(orderId: string, currentStatus: OrderSt
   revalidatePath("/targets");
   return { ok: true };
 }
+
+const PREV_STATUS: Record<OrderStatus, OrderStatus | null> = {
+  pending: null,
+  confirmed: "pending",
+  dispatched: "confirmed",
+  fulfilled: "dispatched",
+};
+
+/**
+ * Moves an order back a stage — e.g. a "fulfilled" order that turns out to
+ * still be in transit, or was marked confirmed by mistake. Clears the
+ * timestamp for the stage being left so re-advancing later records a fresh
+ * one, rather than leaving a stale confirmed_at/dispatched_at/fulfilled_at
+ * from the first time through.
+ */
+export async function revertOrderStatus(orderId: string, currentStatus: OrderStatus) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const prev = PREV_STATUS[currentStatus];
+  if (!prev) return { ok: false, message: "Order is already at the earliest stage" };
+
+  const update: Record<string, unknown> = { status: prev, updated_at: new Date().toISOString() };
+  if (currentStatus === "confirmed") update.confirmed_at = null;
+  if (currentStatus === "dispatched") update.dispatched_at = null;
+  if (currentStatus === "fulfilled") {
+    update.fulfilled_at = null;
+    update.fulfilled_by = null;
+  }
+
+  const { error } = await supabaseAdmin.from("av_orders").update(update).eq("id", orderId);
+  if (error) return { ok: false, message: error.message };
+
+  revalidatePath("/orders");
+  revalidatePath("/dashboard");
+  revalidatePath("/targets");
+  return { ok: true };
+}

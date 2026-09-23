@@ -7,6 +7,7 @@ import { Card } from "@/components/Card";
 import { StatusPill } from "@/components/StatusPill";
 import { EditableCard } from "../../_shared/EditableCard";
 import { CustomerEditForm } from "../CustomerEditForm";
+import { CustomerContacts } from "../CustomerContacts";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -48,11 +49,19 @@ export default async function CustomerDetailPage({
     : { data: [] as { order_id: string }[] };
   const ordersWithItems = new Set((orderItemCounts ?? []).map((i) => i.order_id));
 
+  const { data: contacts } = await supabaseAdmin
+    .from("av_customer_contacts")
+    .select("id, name, role, phone")
+    .eq("customer_id", id)
+    .order("created_at", { ascending: true });
+
   return (
     <div>
       <PageHeader title={customer.name} subtitle={customer.segment ?? "General"} />
 
       <CustomerEditForm customer={customer} />
+
+      <CustomerContacts customerId={id} contacts={contacts ?? []} />
 
       <div className="font-medium text-[var(--ink)] mb-2">Orders</div>
       <div className="space-y-2 mb-6">
