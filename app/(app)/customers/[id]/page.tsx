@@ -42,6 +42,12 @@ export default async function CustomerDetailPage({
     .eq("customer_id", id)
     .order("created_at", { ascending: false });
 
+  const orderIds = (orders ?? []).map((o) => o.id);
+  const { data: orderItemCounts } = orderIds.length
+    ? await supabaseAdmin.from("av_order_items").select("order_id").in("order_id", orderIds)
+    : { data: [] as { order_id: string }[] };
+  const ordersWithItems = new Set((orderItemCounts ?? []).map((i) => i.order_id));
+
   return (
     <div>
       <PageHeader title={customer.name} subtitle={customer.segment ?? "General"} />
@@ -53,23 +59,31 @@ export default async function CustomerDetailPage({
         {(orders ?? []).length === 0 && (
           <div className="text-sm text-[var(--muted)]">No orders yet.</div>
         )}
-        {(orders ?? []).map((o) => (
+        {(orders ?? []).map((o) => {
+          // Orders with real line items (av_order_items) keep product/
+          // quantity/amount read-only here — editing those directly would
+          // desync them from the items they're summarizing. Edit the
+          // products themselves from the Orders page instead.
+          const hasItems = ordersWithItems.has(o.id);
+          return (
           <EditableCard
             key={o.id}
             table="av_orders"
             id={o.id}
             revalidate={["/customers/" + id, "/orders", "/payments", "/dashboard"]}
             initialValues={{
-              product: o.product,
-              quantity: o.quantity,
-              amount: o.amount,
+              ...(hasItems ? {} : { product: o.product, quantity: o.quantity, amount: o.amount }),
               notes: o.notes,
               payment_due_date: o.payment_due_date,
             }}
             fields={[
-              { name: "product", label: "Product", type: "text" },
-              { name: "quantity", label: "Quantity", type: "text" },
-              { name: "amount", label: "Amount (₹)", type: "number" },
+              ...(hasItems
+                ? []
+                : ([
+                    { name: "product", label: "Product", type: "text" },
+                    { name: "quantity", label: "Quantity", type: "text" },
+                    { name: "amount", label: "Amount (₹)", type: "number" },
+                  ] as const)),
               { name: "payment_due_date", label: "Payment due date", type: "date" },
               { name: "notes", label: "Notes", type: "textarea" },
             ]}
@@ -85,7 +99,8 @@ export default async function CustomerDetailPage({
             </div>
             <StatusPill status={o.status} />
           </EditableCard>
-        ))}
+          );
+        })}
       </div>
 
       <div className="font-medium text-[var(--ink)] mb-2">Visits</div>

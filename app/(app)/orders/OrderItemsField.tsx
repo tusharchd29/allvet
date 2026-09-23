@@ -14,9 +14,19 @@ export type CatalogProduct = {
 
 type Row = { key: number; product: string; quantity: string; unitPrice: string };
 
+export type InitialItem = { product_name: string; quantity: number; unit_price: number | null };
+
 let nextKey = 0;
 function blankRow(): Row {
   return { key: nextKey++, product: "", quantity: "1", unitPrice: "" };
+}
+function rowFromItem(it: InitialItem): Row {
+  return {
+    key: nextKey++,
+    product: it.product_name,
+    quantity: String(it.quantity),
+    unitPrice: it.unit_price != null ? String(it.unit_price) : "",
+  };
 }
 
 /**
@@ -25,9 +35,18 @@ function blankRow(): Row {
  * / `item_unit_price` field arrays (FormData.getAll keeps DOM order, so the
  * arrays line up by index — no client-side JSON serialization needed).
  * Picking a name already in the catalog prefills its default price.
+ * Pass `initialItems` to seed the rows when editing an existing order.
  */
-export function OrderItemsField({ products }: { products: CatalogProduct[] }) {
-  const [rows, setRows] = useState<Row[]>([blankRow()]);
+export function OrderItemsField({
+  products,
+  initialItems,
+}: {
+  products: CatalogProduct[];
+  initialItems?: InitialItem[];
+}) {
+  const [rows, setRows] = useState<Row[]>(() =>
+    initialItems && initialItems.length > 0 ? initialItems.map(rowFromItem) : [blankRow()],
+  );
 
   function updateRow(key: number, patch: Partial<Row>) {
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));

@@ -86,6 +86,82 @@ export async function createOrder(formData: FormData) {
   redirect("/orders");
 }
 
+/**
+ * Replaces an order's line items wholesale — delete existing rows, insert
+ * the new set — and recomputes the maintained product/quantity/amount
+ * summary on av_orders from them. A full-list replace is simpler and just
+ * as correct as diffing row-by-row for a handful of items per order.
+ */
+export async function updateOrderItems(orderId: string, formData: FormData) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const { data: order } = await supabaseAdmin
+    .from("av_orders")
+    .select("rep_id")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (!order) return { ok: false, message: "Order not found" };
+  if (session.role !== "owner" && order.rep_id !== session.userId) {
+    return { ok: false, message: "Order not found" };
+  }
+
+  const productNames = formData.getAll("item_product").map((v) => String(v).trim());
+  const quantities = formData.getAll("item_quantity").map((v) => Number(v));
+  const unitPrices = formData
+    .getAll("item_unit_price")
+    .map((v) => (String(v).trim() ? Number(v) : null));
+
+  const items = productNames
+    .map((name, i) => ({ name, quantity: quantities[i], unitPrice: unitPrices[i] }))
+    .filter((it) => it.name);
+
+  if (items.length === 0) return { ok: false, message: "At least one product is required" };
+  if (items.some((it) => !it.quantity || it.quantity <= 0 || Number.isNaN(it.quantity))) {
+    return { ok: false, message: "Every product needs a quantity greater than zero" };
+  }
+
+  const { data: catalog } = await supabaseAdmin.from("av_products").select("id, name");
+  const catalogByName = new Map((catalog ?? []).map((p) => [p.name.toLowerCase(), p.id as string]));
+
+  const lineItems = items.map((it) => {
+    const line_amount = it.unitPrice != null ? Math.round(it.quantity * it.unitPrice * 100) / 100 : null;
+    return {
+      product_id: catalogByName.get(it.name.toLowerCase()) ?? null,
+      product_name: it.name,
+      quantity: it.quantity,
+      unit_price: it.unitPrice,
+      line_amount,
+    };
+  });
+
+  const amount = lineItems.reduce((s, li) => s + (li.line_amount ?? 0), 0);
+  const product = lineItems.map((li) => `${li.product_name} x${li.quantity}`).join(", ");
+  const quantity = `${lineItems.length} item${lineItems.length === 1 ? "" : "s"}`;
+
+  const { error: deleteError } = await supabaseAdmin
+    .from("av_order_items")
+    .delete()
+    .eq("order_id", orderId);
+  if (deleteError) return { ok: false, message: deleteError.message };
+
+  const { error: insertError } = await supabaseAdmin
+    .from("av_order_items")
+    .insert(lineItems.map((li) => ({ ...li, order_id: orderId })));
+  if (insertError) return { ok: false, message: insertError.message };
+
+  const { error: updateError } = await supabaseAdmin
+    .from("av_orders")
+    .update({ product, quantity, amount, updated_at: new Date().toISOString() })
+    .eq("id", orderId);
+  if (updateError) return { ok: false, message: updateError.message };
+
+  revalidatePath("/orders");
+  revalidatePath("/payments");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}
+
 const NEXT_STATUS: Record<OrderStatus, OrderStatus | null> = {
   pending: "confirmed",
   confirmed: "dispatched",
