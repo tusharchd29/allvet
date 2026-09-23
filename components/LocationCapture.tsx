@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Icon } from "./icon";
 
 type Coords = { lat: number; lng: number } | null;
@@ -29,31 +29,44 @@ export function LocationCapture({
     );
   }
 
-  useEffect(() => {
-    capture();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
     <div>
       <label className="block text-sm font-medium text-[var(--ink)] mb-1">{label}</label>
       <input type="hidden" name="latitude" value={coords?.lat ?? ""} />
       <input type="hidden" name="longitude" value={coords?.lng ?? ""} />
       <div className="flex items-center gap-2 text-sm">
+        {status === "idle" && (
+          <button
+            type="button"
+            onClick={capture}
+            className="btn-secondary text-xs px-3 py-1.5 inline-flex items-center gap-1.5"
+          >
+            <Icon name="map-pin" size={14} /> Capture location
+          </button>
+        )}
         {status === "loading" && (
           <span className="text-[var(--muted)] flex items-center gap-1.5">
             <Icon name="map-pin" size={14} /> Capturing location…
           </span>
         )}
         {status === "ok" && coords && (
-          <span className="text-[var(--seafoam)] flex items-center gap-1.5">
-            <Icon name="check" size={14} /> Location captured
-          </span>
+          <>
+            <span className="text-[var(--seafoam)] flex items-center gap-1.5">
+              <Icon name="check" size={14} /> Location captured
+            </span>
+            <button
+              type="button"
+              onClick={capture}
+              className="text-[var(--teal)] underline text-xs"
+            >
+              Recapture
+            </button>
+          </>
         )}
         {status === "error" && (
           <>
             <span className="text-[var(--muted)] flex items-center gap-1.5">
-              <Icon name="map-pin" size={14} /> Location unavailable
+              <Icon name="map-pin" size={14} /> Couldn&apos;t get location
             </span>
             <button
               type="button"
@@ -64,16 +77,10 @@ export function LocationCapture({
             </button>
           </>
         )}
-        {status === "idle" && (
-          <button
-            type="button"
-            onClick={capture}
-            className="text-[var(--teal)] underline text-xs"
-          >
-            Use my location
-          </button>
-        )}
       </div>
+      <p className="text-xs text-[var(--muted)] mt-1">
+        {status === "ok" ? "This will be pinned on the territory map." : "Optional — tap to attach a GPS pin for the map."}
+      </p>
     </div>
   );
 }

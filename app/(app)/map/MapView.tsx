@@ -36,7 +36,15 @@ function pinIcon(color: string) {
   });
 }
 
-export function MapView({ customers }: { customers: MapCustomer[] }) {
+export function MapView({
+  customers,
+  height = "70vh",
+  interactive = true,
+}: {
+  customers: MapCustomer[];
+  height?: string;
+  interactive?: boolean;
+}) {
   const center = useMemo<[number, number]>(() => {
     if (customers.length === 0) return [22.9734, 78.6569]; // center of India
     const lat = customers.reduce((s, c) => s + c.latitude, 0) / customers.length;
@@ -45,8 +53,17 @@ export function MapView({ customers }: { customers: MapCustomer[] }) {
   }, [customers]);
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-[var(--border)]" style={{ height: "70vh" }}>
-      <MapContainer center={center} zoom={customers.length ? 7 : 5} style={{ height: "100%", width: "100%" }}>
+    <div className="rounded-2xl overflow-hidden border border-[var(--border)]" style={{ height }}>
+      <MapContainer
+        center={center}
+        zoom={customers.length ? 7 : 5}
+        style={{ height: "100%", width: "100%" }}
+        scrollWheelZoom={interactive}
+        dragging={interactive}
+        zoomControl={interactive}
+        doubleClickZoom={interactive}
+        touchZoom={interactive}
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
