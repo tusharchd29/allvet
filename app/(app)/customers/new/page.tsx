@@ -3,6 +3,8 @@ import { getSession } from "@/lib/session";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
+import { LocationCapture } from "@/components/LocationCapture";
+import { ZONES, ZONE_LABEL } from "@/lib/utils";
 import { createCustomer } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +57,20 @@ export default async function NewCustomerPage() {
               ))}
             </datalist>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+              Zone
+            </label>
+            <select name="zone" className="input-field" defaultValue="">
+              <option value="">No zone</option>
+              {ZONES.map((z) => (
+                <option key={z} value={z}>
+                  {ZONE_LABEL[z]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <LocationCapture label="Location" />
           <button type="submit" className="btn-primary w-full py-2.5">
             Save customer
           </button>

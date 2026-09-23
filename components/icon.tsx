@@ -20,6 +20,9 @@ import {
   Clock,
   Truck,
   Box,
+  Map,
+  IndianRupee,
+  Navigation,
   type LucideIcon,
 } from "lucide-react";
 
@@ -45,6 +48,9 @@ const MAP: Record<string, LucideIcon> = {
   clock: Clock,
   truck: Truck,
   box: Box,
+  map: Map,
+  "indian-rupee": IndianRupee,
+  navigation: Navigation,
 };
 
 export function Icon({

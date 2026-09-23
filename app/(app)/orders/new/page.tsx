@@ -59,6 +59,12 @@ export default async function NewOrderPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+              Payment due date
+            </label>
+            <input type="date" name="payment_due_date" className="input-field" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1">
               Notes
             </label>
             <textarea name="notes" rows={2} className="input-field" placeholder="Optional" />

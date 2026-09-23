@@ -1,17 +1,17 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { getRepScope } from "@/lib/data";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
-import { Icon } from "@/components/icon";
-import { ZONES, ZONE_LABEL, type Zone } from "@/lib/utils";
+import { ZONES, ZONE_LABEL } from "@/lib/utils";
+import { MapView } from "./MapView";
 
 export const dynamic = "force-dynamic";
 
-export default async function CustomersPage({
+export default async function MapPage({
   searchParams,
 }: {
   searchParams: Promise<{ zone?: string }>;
@@ -23,7 +23,9 @@ export default async function CustomersPage({
   const repId = getRepScope(session);
   const query = supabaseAdmin
     .from("av_customers")
-    .select("id, name, phone, address, segment, zone")
+    .select("id, name, segment, zone, latitude, longitude")
+    .not("latitude", "is", null)
+    .not("longitude", "is", null)
     .order("name");
   if (repId) query.eq("rep_id", repId);
   if (zoneFilter) query.eq("zone", zoneFilter);
@@ -32,18 +34,13 @@ export default async function CustomersPage({
   return (
     <div>
       <PageHeader
-        title="Customers"
-        subtitle={`${customers?.length ?? 0} clinics`}
-        action={
-          <Link href="/customers/new" className="btn-primary px-4 py-2 text-sm inline-flex items-center gap-1.5">
-            <Icon name="plus" size={15} /> New
-          </Link>
-        }
+        title="Territory Map"
+        subtitle={`${customers?.length ?? 0} located clinics`}
       />
 
       <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
         <Link
-          href="/customers"
+          href="/map"
           className={`text-xs px-3 py-1.5 rounded-full border whitespace-nowrap ${
             !zoneFilter
               ? "bg-[var(--teal)] text-white border-[var(--teal)]"
@@ -55,7 +52,7 @@ export default async function CustomersPage({
         {ZONES.map((z) => (
           <Link
             key={z}
-            href={`/customers?zone=${z}`}
+            href={`/map?zone=${z}`}
             className={`text-xs px-3 py-1.5 rounded-full border whitespace-nowrap ${
               zoneFilter === z
                 ? "bg-[var(--teal)] text-white border-[var(--teal)]"
@@ -70,28 +67,22 @@ export default async function CustomersPage({
       {!customers || customers.length === 0 ? (
         <Card>
           <EmptyState
-            icon="users"
-            title="No customers yet"
-            subtitle="Add the first clinic you visit to start tracking orders and visits."
+            icon="map"
+            title="No locations captured yet"
+            subtitle="Locations are captured automatically when you add a customer or log a visit from the field."
           />
         </Card>
       ) : (
-        <div className="space-y-2">
-          {customers.map((c) => (
-            <Link key={c.id} href={`/customers/${c.id}`}>
-              <Card className="flex items-center justify-between hover:border-[var(--teal)] transition-colors">
-                <div>
-                  <div className="font-medium text-[var(--ink)]">{c.name}</div>
-                  <div className="text-sm text-[var(--muted)]">
-                    {c.segment ?? "General"} {c.phone ? `· ${c.phone}` : ""}
-                    {c.zone && ` · ${ZONE_LABEL[c.zone as Zone] ?? c.zone}`}
-                  </div>
-                </div>
-                <Icon name="chevron-right" size={18} className="text-[var(--muted)]" />
-              </Card>
-            </Link>
-          ))}
-        </div>
+        <MapView
+          customers={customers.map((c) => ({
+            id: c.id,
+            name: c.name,
+            latitude: c.latitude as number,
+            longitude: c.longitude as number,
+            zone: c.zone,
+            segment: c.segment,
+          }))}
+        />
       )}
     </div>
   );

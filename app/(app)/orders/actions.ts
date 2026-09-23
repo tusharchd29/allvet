@@ -16,6 +16,7 @@ export async function createOrder(formData: FormData) {
   const amountRaw = String(formData.get("amount") || "").trim();
   const amount = amountRaw ? Number(amountRaw) : null;
   const notes = String(formData.get("notes") || "").trim() || null;
+  const payment_due_date = String(formData.get("payment_due_date") || "") || null;
 
   if (!customer_id || !product) {
     throw new Error("Customer and product are required");
@@ -28,6 +29,7 @@ export async function createOrder(formData: FormData) {
     quantity,
     amount,
     notes,
+    payment_due_date,
     status: "pending",
   });
 

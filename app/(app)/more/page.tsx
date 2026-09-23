@@ -9,7 +9,12 @@ export default function MorePage() {
     <div>
       <PageHeader title="More" />
       <div className="space-y-2">
-        {[...GROWTH_NAV, { href: "/tours", label: "Tour Plan", icon: "calendar" }, { href: "/travel", label: "Travel Log", icon: "car" }].map(
+        {[
+          { href: "/map", label: "Territory Map", icon: "map" },
+          ...GROWTH_NAV,
+          { href: "/tours", label: "Tour Plan", icon: "calendar" },
+          { href: "/travel", label: "Travel Log", icon: "car" },
+        ].map(
           (item) => (
             <Link key={item.href} href={item.href}>
               <Card className="flex items-center justify-between">

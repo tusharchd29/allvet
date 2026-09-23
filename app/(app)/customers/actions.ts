@@ -13,6 +13,11 @@ export async function createCustomer(formData: FormData) {
   const phone = String(formData.get("phone") || "").trim() || null;
   const address = String(formData.get("address") || "").trim() || null;
   const segment = String(formData.get("segment") || "").trim() || null;
+  const zone = String(formData.get("zone") || "").trim() || null;
+  const latRaw = String(formData.get("latitude") || "").trim();
+  const lngRaw = String(formData.get("longitude") || "").trim();
+  const latitude = latRaw ? Number(latRaw) : null;
+  const longitude = lngRaw ? Number(lngRaw) : null;
 
   if (!name) throw new Error("Name is required");
 
@@ -25,6 +30,9 @@ export async function createCustomer(formData: FormData) {
     phone,
     address,
     segment,
+    zone,
+    latitude,
+    longitude,
     rep_id: session.userId,
   });
 

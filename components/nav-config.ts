@@ -10,12 +10,14 @@ export const EVERYDAY_NAV: NavItem[] = [
   { href: "/customers", label: "Customers", icon: "users" },
   { href: "/visits", label: "Visits", icon: "map-pin" },
   { href: "/orders", label: "Orders", icon: "package" },
+  { href: "/map", label: "Territory Map", icon: "map" },
   { href: "/tours", label: "Tour Plan", icon: "calendar" },
   { href: "/travel", label: "Travel Log", icon: "car" },
 ];
 
 export const GROWTH_NAV: NavItem[] = [
   { href: "/targets", label: "Targets", icon: "target" },
+  { href: "/payments", label: "Payment Dues", icon: "indian-rupee" },
   { href: "/expenses", label: "Expenses", icon: "receipt" },
   { href: "/advances", label: "Advances", icon: "wallet" },
   { href: "/trials", label: "Product Trials", icon: "flask-conical" },

@@ -49,3 +49,19 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
   dispatched: "Dispatched",
   fulfilled: "Fulfilled",
 };
+
+export const ZONES = ["north", "central", "west", "south"] as const;
+
+export type Zone = (typeof ZONES)[number];
+
+export const ZONE_LABEL: Record<Zone, string> = {
+  north: "North",
+  central: "Central",
+  west: "West",
+  south: "South",
+};
+
+export function isOverdue(dueDate: string | null | undefined): boolean {
+  if (!dueDate) return false;
+  return new Date(dueDate).getTime() < new Date().setHours(0, 0, 0, 0);
+}

@@ -17,6 +17,10 @@ export async function createVisit(formData: FormData) {
   const next_visit_date = String(formData.get("next_visit_date") || "") || null;
   const visit_date =
     String(formData.get("visit_date") || "") || new Date().toISOString().slice(0, 10);
+  const latRaw = String(formData.get("latitude") || "").trim();
+  const lngRaw = String(formData.get("longitude") || "").trim();
+  const latitude = latRaw ? Number(latRaw) : null;
+  const longitude = lngRaw ? Number(lngRaw) : null;
 
   if (!customer_id) throw new Error("Customer is required");
 
@@ -28,6 +32,8 @@ export async function createVisit(formData: FormData) {
     discussion_summary,
     follow_up_required,
     next_visit_date,
+    latitude,
+    longitude,
   });
 
   if (error) throw new Error(error.message);

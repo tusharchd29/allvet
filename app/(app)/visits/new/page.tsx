@@ -4,6 +4,7 @@ import { getRepScope } from "@/lib/data";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
+import { LocationCapture } from "@/components/LocationCapture";
 import { createVisit } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -75,6 +76,7 @@ export default async function NewVisitPage() {
             </label>
             <input type="date" name="next_visit_date" className="input-field" />
           </div>
+          <LocationCapture label="Visit location" />
           <button type="submit" className="btn-primary w-full py-2.5">
             Save visit
           </button>
