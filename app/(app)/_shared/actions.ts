@@ -25,7 +25,16 @@ const REP_SCOPED_TABLES = new Set([
 // edit or delete.
 const OWNER_ONLY_TABLES = new Set(["av_brochures"]);
 
-const EDITABLE_TABLES = new Set([...REP_SCOPED_TABLES, ...OWNER_ONLY_TABLES]);
+// Shared, team-wide reference data (not owned by any one rep, not
+// owner-gated either) — anyone on the team can maintain it, like the
+// product catalog everyone orders from.
+const SHARED_EDITABLE_TABLES = new Set(["av_products"]);
+
+const EDITABLE_TABLES = new Set([
+  ...REP_SCOPED_TABLES,
+  ...OWNER_ONLY_TABLES,
+  ...SHARED_EDITABLE_TABLES,
+]);
 
 const NOT_ALLOWED_MESSAGE = "Record not found, or you don't have permission to change it.";
 

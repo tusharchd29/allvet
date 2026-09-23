@@ -65,3 +65,38 @@ export function isOverdue(dueDate: string | null | undefined): boolean {
   if (!dueDate) return false;
   return new Date(dueDate).getTime() < new Date().setHours(0, 0, 0, 0);
 }
+
+/** Whole days between a past timestamp and now (0 for "today"). */
+export function daysSince(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const then = new Date(value).getTime();
+  if (Number.isNaN(then)) return null;
+  return Math.max(0, Math.floor((Date.now() - then) / 86_400_000));
+}
+
+/**
+ * Order status → the timestamp that started that status, used to compute
+ * how long an order has sat in its current stage. `created_at` covers
+ * "pending" (no separate started-pending column needed).
+ */
+export function ageingLabel(order: {
+  status: OrderStatus;
+  created_at: string;
+  confirmed_at?: string | null;
+  dispatched_at?: string | null;
+  fulfilled_at?: string | null;
+}): string {
+  const since =
+    order.status === "fulfilled"
+      ? order.fulfilled_at
+      : order.status === "dispatched"
+        ? order.dispatched_at
+        : order.status === "confirmed"
+          ? order.confirmed_at
+          : order.created_at;
+  const days = daysSince(since ?? order.created_at);
+  if (days === null) return "";
+  if (order.status === "fulfilled") return days === 0 ? "Fulfilled today" : `Fulfilled ${days}d ago`;
+  if (days === 0) return `${STATUS_LABEL[order.status]} today`;
+  return `${days}d in ${STATUS_LABEL[order.status]}`;
+}

@@ -16,6 +16,7 @@ export const EVERYDAY_NAV: NavItem[] = [
 ];
 
 export const GROWTH_NAV: NavItem[] = [
+  { href: "/products", label: "Products", icon: "tags" },
   { href: "/targets", label: "Targets", icon: "target" },
   { href: "/payments", label: "Payment Dues", icon: "indian-rupee" },
   { href: "/expenses", label: "Expenses", icon: "receipt" },

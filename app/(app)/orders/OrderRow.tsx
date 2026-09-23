@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Card } from "@/components/Card";
 import { StatusPill } from "@/components/StatusPill";
 import { Icon } from "@/components/icon";
-import { formatCurrency, formatDate, type OrderStatus } from "@/lib/utils";
+import { formatCurrency, formatDate, ageingLabel, type OrderStatus } from "@/lib/utils";
 import { advanceOrderStatus } from "./actions";
 import { updateEntry } from "../_shared/actions";
 
@@ -22,17 +22,27 @@ type Order = {
   amount: number | null;
   status: OrderStatus;
   created_at: string;
+  confirmed_at?: string | null;
+  dispatched_at?: string | null;
+  fulfilled_at?: string | null;
   customerName: string;
   notes?: string | null;
   payment_due_date?: string | null;
 };
 
-export function OrderRow({ order }: { order: Order }) {
+type LineItem = { product_name: string; quantity: number };
+
+export function OrderRow({ order, items = [] }: { order: Order; items?: LineItem[] }) {
+  const hasItems = items.length > 0;
   const [status, setStatus] = useState(order.status);
   const [pending, startTransition] = useTransition();
   const label = NEXT_LABEL[status];
 
   const [editing, setEditing] = useState(false);
+  // Legacy (pre-line-items) orders can still have product/quantity/amount
+  // edited inline. Orders with real line items keep those fields read-only
+  // here — the breakdown lives in av_order_items — and only notes / the
+  // due date are editable.
   const [values, setValues] = useState({
     product: order.product,
     quantity: order.quantity ?? "",
@@ -64,30 +74,30 @@ export function OrderRow({ order }: { order: Order }) {
   }
 
   function save() {
-    if (!values.product.trim()) {
+    if (!hasItems && !values.product.trim()) {
       setError("Product is required");
       return;
     }
     setError(null);
     startEditTransition(async () => {
       try {
-        await updateEntry(
-          "av_orders",
-          order.id,
-          {
+        const payload: Record<string, unknown> = {
+          payment_due_date: values.payment_due_date || null,
+          notes: values.notes.trim() || null,
+        };
+        if (!hasItems) {
+          payload.product = values.product.trim();
+          payload.quantity = values.quantity ? String(values.quantity) : null;
+          payload.amount = values.amount === "" ? null : Number(values.amount);
+        }
+        await updateEntry("av_orders", order.id, payload, ["/orders", "/payments", "/dashboard"]);
+        if (!hasItems) {
+          setSaved({
             product: values.product.trim(),
             quantity: values.quantity ? String(values.quantity) : null,
             amount: values.amount === "" ? null : Number(values.amount),
-            payment_due_date: values.payment_due_date || null,
-            notes: values.notes.trim() || null,
-          },
-          ["/orders", "/payments", "/dashboard"],
-        );
-        setSaved({
-          product: values.product.trim(),
-          quantity: values.quantity ? String(values.quantity) : null,
-          amount: values.amount === "" ? null : Number(values.amount),
-        });
+          });
+        }
         setEditing(false);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Couldn't save changes");
@@ -99,34 +109,49 @@ export function OrderRow({ order }: { order: Order }) {
     return (
       <Card>
         <div className="space-y-3">
-          <div>
-            <label className="block text-xs font-medium text-[var(--ink)] mb-1">Product</label>
-            <input
-              className="input-field text-sm"
-              value={values.product}
-              onChange={(e) => setValues((v) => ({ ...v, product: e.target.value }))}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+          {hasItems ? (
             <div>
-              <label className="block text-xs font-medium text-[var(--ink)] mb-1">Quantity</label>
-              <input
-                className="input-field text-sm"
-                value={values.quantity}
-                onChange={(e) => setValues((v) => ({ ...v, quantity: e.target.value }))}
-              />
+              <div className="text-xs font-medium text-[var(--ink)] mb-1">Products</div>
+              <div className="text-sm text-[var(--muted)]">
+                {items.map((it) => `${it.product_name} x${it.quantity}`).join(", ")}
+              </div>
+              <div className="text-xs text-[var(--muted)] mt-1">
+                To change products, edit the order items directly isn&apos;t supported yet — create a
+                new order instead.
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-[var(--ink)] mb-1">Amount (₹)</label>
-              <input
-                type="number"
-                step="0.01"
-                className="input-field text-sm"
-                value={values.amount}
-                onChange={(e) => setValues((v) => ({ ...v, amount: e.target.value }))}
-              />
-            </div>
-          </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-[var(--ink)] mb-1">Product</label>
+                <input
+                  className="input-field text-sm"
+                  value={values.product}
+                  onChange={(e) => setValues((v) => ({ ...v, product: e.target.value }))}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-[var(--ink)] mb-1">Quantity</label>
+                  <input
+                    className="input-field text-sm"
+                    value={values.quantity}
+                    onChange={(e) => setValues((v) => ({ ...v, quantity: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-[var(--ink)] mb-1">Amount (₹)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="input-field text-sm"
+                    value={values.amount}
+                    onChange={(e) => setValues((v) => ({ ...v, amount: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </>
+          )}
           <div>
             <label className="block text-xs font-medium text-[var(--ink)] mb-1">Payment due date</label>
             <input
@@ -179,11 +204,13 @@ export function OrderRow({ order }: { order: Order }) {
       <div className="min-w-0">
         <div className="font-medium text-[var(--ink)] truncate">{order.customerName}</div>
         <div className="text-sm text-[var(--muted)]">
-          {saved.product} {saved.quantity ? `· ${saved.quantity}` : ""} ·{" "}
-          {formatCurrency(saved.amount)}
+          {hasItems
+            ? items.map((it) => `${it.product_name} x${it.quantity}`).join(", ")
+            : `${saved.product}${saved.quantity ? ` · ${saved.quantity}` : ""}`}{" "}
+          · {formatCurrency(saved.amount)}
         </div>
         <div className="text-xs text-[var(--muted)] mt-0.5">
-          {formatDate(order.created_at)}
+          {formatDate(order.created_at)} · {ageingLabel(order)}
         </div>
       </div>
       <div className="flex flex-col items-end gap-2 shrink-0">

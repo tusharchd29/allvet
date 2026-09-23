@@ -25,6 +25,7 @@ import {
   Navigation,
   Pencil,
   X,
+  Tags,
   type LucideIcon,
 } from "lucide-react";
 
@@ -55,6 +56,7 @@ const MAP: Record<string, LucideIcon> = {
   navigation: Navigation,
   edit: Pencil,
   x: X,
+  tags: Tags,
 };
 
 export function Icon({

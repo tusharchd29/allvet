@@ -6,6 +6,8 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { createOrder } from "../actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { OrderItemsField } from "../OrderItemsField";
+import { DueDatePresets } from "@/components/DueDatePresets";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +16,17 @@ export default async function NewOrderPage() {
   if (!session) redirect("/login");
 
   const repId = getRepScope(session);
-  const query = supabaseAdmin.from("av_customers").select("id, name").order("name");
-  if (repId) query.eq("rep_id", repId);
-  const { data: customers } = await query;
+  const customersQuery = supabaseAdmin.from("av_customers").select("id, name").order("name");
+  if (repId) customersQuery.eq("rep_id", repId);
+
+  const [{ data: customers }, { data: products }] = await Promise.all([
+    customersQuery,
+    supabaseAdmin
+      .from("av_products")
+      .select("id, name, category, default_unit, default_price")
+      .eq("active", true)
+      .order("name"),
+  ]);
 
   return (
     <div>
@@ -38,31 +48,15 @@ export default async function NewOrderPage() {
               ))}
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-[var(--ink)] mb-1">
-              Product
-            </label>
-            <input name="product" required className="input-field" placeholder="e.g. Calcium bolus" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-[var(--ink)] mb-1">
-                Quantity
-              </label>
-              <input name="quantity" className="input-field" placeholder="e.g. 20 boxes" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--ink)] mb-1">
-                Amount (₹)
-              </label>
-              <input name="amount" type="number" step="0.01" className="input-field" placeholder="0" />
-            </div>
-          </div>
+
+          <OrderItemsField products={products ?? []} />
+
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">
               Payment due date
             </label>
             <input type="date" name="payment_due_date" className="input-field" />
+            <DueDatePresets />
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">
