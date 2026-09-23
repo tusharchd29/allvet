@@ -4,8 +4,6 @@ import { getSession } from "@/lib/session";
 import { getRepScope } from "@/lib/data";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
-import { Card } from "@/components/Card";
-import { EmptyState } from "@/components/EmptyState";
 import { ZONES, ZONE_LABEL } from "@/lib/utils";
 import { MapView } from "./MapView";
 
@@ -64,26 +62,22 @@ export default async function MapPage({
         ))}
       </div>
 
-      {!customers || customers.length === 0 ? (
-        <Card>
-          <EmptyState
-            icon="map"
-            title="No locations captured yet"
-            subtitle="Locations are captured automatically when you add a customer or log a visit from the field."
-          />
-        </Card>
-      ) : (
-        <MapView
-          customers={customers.map((c) => ({
-            id: c.id,
-            name: c.name,
-            latitude: c.latitude as number,
-            longitude: c.longitude as number,
-            zone: c.zone,
-            segment: c.segment,
-          }))}
-        />
+      {(!customers || customers.length === 0) && (
+        <p className="text-sm text-[var(--muted)] mb-3">
+          No locations pinned yet — showing India. Capture a location while adding a customer or logging a visit to pin it here.
+        </p>
       )}
+
+      <MapView
+        customers={(customers ?? []).map((c) => ({
+          id: c.id,
+          name: c.name,
+          latitude: c.latitude as number,
+          longitude: c.longitude as number,
+          zone: c.zone,
+          segment: c.segment,
+        }))}
+      />
     </div>
   );
 }

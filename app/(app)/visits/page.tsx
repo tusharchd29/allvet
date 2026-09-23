@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/icon";
+import { EditableCard } from "../_shared/EditableCard";
 import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,7 @@ export default async function VisitsPage() {
   const repId = getRepScope(session);
   const query = supabaseAdmin
     .from("av_visits")
-    .select("id, visit_date, purpose, follow_up_required, av_customers(name)")
+    .select("id, visit_date, purpose, discussion_summary, follow_up_required, next_visit_date, av_customers(name)")
     .order("visit_date", { ascending: false })
     .limit(50);
   if (repId) query.eq("rep_id", repId);
@@ -43,7 +44,27 @@ export default async function VisitsPage() {
       ) : (
         <div className="space-y-2">
           {visits.map((v) => (
-            <Card key={v.id} className="flex items-center justify-between">
+            <EditableCard
+              key={v.id}
+              table="av_visits"
+              id={v.id}
+              revalidate={["/visits"]}
+              initialValues={{
+                visit_date: v.visit_date,
+                purpose: v.purpose,
+                discussion_summary: v.discussion_summary,
+                follow_up_required: v.follow_up_required,
+                next_visit_date: v.next_visit_date,
+              }}
+              fields={[
+                { name: "visit_date", label: "Visit date", type: "date" },
+                { name: "purpose", label: "Purpose", type: "text" },
+                { name: "discussion_summary", label: "Discussion summary", type: "textarea" },
+                { name: "follow_up_required", label: "Needs a follow-up", type: "checkbox" },
+                { name: "next_visit_date", label: "Next visit date", type: "date" },
+              ]}
+              className="flex items-center justify-between"
+            >
               <div>
                 <div className="font-medium text-[var(--ink)]">
                   {/* @ts-expect-error joined relation */}
@@ -58,7 +79,7 @@ export default async function VisitsPage() {
                   Follow-up
                 </span>
               )}
-            </Card>
+            </EditableCard>
           ))}
         </div>
       )}

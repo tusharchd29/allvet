@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
+import { EditableCard } from "../_shared/EditableCard";
 import { formatDate } from "@/lib/utils";
 import { createTourPlan } from "./actions";
 
@@ -61,7 +62,17 @@ export default async function ToursPage() {
       ) : (
         <div className="space-y-2">
           {tours.map((t) => (
-            <Card key={t.id}>
+            <EditableCard
+              key={t.id}
+              table="av_tours"
+              id={t.id}
+              revalidate={["/tours"]}
+              initialValues={{ week_start: t.week_start, plan_notes: t.plan_notes }}
+              fields={[
+                { name: "week_start", label: "Week starting", type: "date" },
+                { name: "plan_notes", label: "Plan", type: "textarea" },
+              ]}
+            >
               <div className="text-sm font-medium text-[var(--ink)]">
                 Week of {formatDate(t.week_start)}
                 {session.role === "owner" && (
@@ -70,7 +81,7 @@ export default async function ToursPage() {
                 )}
               </div>
               <div className="text-sm text-[var(--ink)] mt-1">{t.plan_notes}</div>
-            </Card>
+            </EditableCard>
           ))}
         </div>
       )}

@@ -151,28 +151,25 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {mapCustomers.length === 0 ? (
-          <EmptyState
-            icon="map"
-            title="No locations pinned yet"
-            subtitle="Locations get pinned here once you capture one while adding a customer or logging a visit."
-          />
-        ) : (
-          <Link href="/map">
-            <MapView
-              customers={mapCustomers.map((c) => ({
-                id: c.id,
-                name: c.name,
-                latitude: c.latitude as number,
-                longitude: c.longitude as number,
-                zone: c.zone,
-                segment: c.segment,
-              }))}
-              height="260px"
-              interactive={false}
-            />
-          </Link>
+        {mapCustomers.length === 0 && (
+          <p className="text-xs text-[var(--muted)] mb-2">
+            No locations pinned yet — showing India. Capture one while adding a customer or logging a visit.
+          </p>
         )}
+        <Link href="/map">
+          <MapView
+            customers={mapCustomers.map((c) => ({
+              id: c.id,
+              name: c.name,
+              latitude: c.latitude as number,
+              longitude: c.longitude as number,
+              zone: c.zone,
+              segment: c.segment,
+            }))}
+            height="260px"
+            interactive={false}
+          />
+        </Link>
       </Card>
 
       <Card>

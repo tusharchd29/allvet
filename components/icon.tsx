@@ -23,6 +23,8 @@ import {
   Map,
   IndianRupee,
   Navigation,
+  Pencil,
+  X,
   type LucideIcon,
 } from "lucide-react";
 
@@ -51,6 +53,8 @@ const MAP: Record<string, LucideIcon> = {
   map: Map,
   "indian-rupee": IndianRupee,
   navigation: Navigation,
+  edit: Pencil,
+  x: X,
 };
 
 export function Icon({

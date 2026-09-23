@@ -19,7 +19,7 @@ export default async function OrdersPage() {
   const repId = getRepScope(session);
   const query = supabaseAdmin
     .from("av_orders")
-    .select("id, product, quantity, amount, status, created_at, av_customers(name)")
+    .select("id, product, quantity, amount, status, created_at, notes, payment_due_date, av_customers(name)")
     .order("created_at", { ascending: false })
     .limit(80);
   if (repId) query.eq("rep_id", repId);
@@ -53,6 +53,8 @@ export default async function OrdersPage() {
                 amount: o.amount,
                 status: o.status as OrderStatus,
                 created_at: o.created_at,
+                notes: o.notes,
+                payment_due_date: o.payment_due_date,
                 // @ts-expect-error joined relation
                 customerName: o.av_customers?.name ?? "Customer",
               }}

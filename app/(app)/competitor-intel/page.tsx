@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
+import { EditableCard } from "../_shared/EditableCard";
 import { formatDate } from "@/lib/utils";
 import { createCompetitorIntel } from "./actions";
 
@@ -72,7 +73,17 @@ export default async function CompetitorIntelPage() {
       ) : (
         <div className="space-y-2">
           {intel.map((i) => (
-            <Card key={i.id}>
+            <EditableCard
+              key={i.id}
+              table="av_competitor_intel"
+              id={i.id}
+              revalidate={["/competitor-intel"]}
+              initialValues={{ competitor_name: i.competitor_name, notes: i.notes }}
+              fields={[
+                { name: "competitor_name", label: "Competitor", type: "text" },
+                { name: "notes", label: "Notes", type: "textarea" },
+              ]}
+            >
               <div className="font-medium text-[var(--ink)]">
                 {i.competitor_name} ·{" "}
                 {/* @ts-expect-error joined relation */}
@@ -80,7 +91,7 @@ export default async function CompetitorIntelPage() {
               </div>
               <div className="text-sm text-[var(--muted)]">{formatDate(i.created_at)}</div>
               {i.notes && <div className="text-sm text-[var(--ink)] mt-1">{i.notes}</div>}
-            </Card>
+            </EditableCard>
           ))}
         </div>
       )}

@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
+import { EditableCard } from "../_shared/EditableCard";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { createExpense } from "./actions";
 
@@ -70,7 +71,25 @@ export default async function ExpensesPage() {
       ) : (
         <div className="space-y-2">
           {expenses.map((e) => (
-            <Card key={e.id} className="flex items-center justify-between">
+            <EditableCard
+              key={e.id}
+              table="av_expenses"
+              id={e.id}
+              revalidate={["/expenses"]}
+              initialValues={{
+                category: e.category,
+                amount: e.amount,
+                note: e.note,
+                expense_date: e.expense_date,
+              }}
+              fields={[
+                { name: "category", label: "Category", type: "text" },
+                { name: "amount", label: "Amount (₹)", type: "number" },
+                { name: "expense_date", label: "Date", type: "date" },
+                { name: "note", label: "Note", type: "text" },
+              ]}
+              className="flex items-center justify-between"
+            >
               <div>
                 <div className="font-medium text-[var(--ink)]">{e.category}</div>
                 <div className="text-sm text-[var(--muted)]">
@@ -82,7 +101,7 @@ export default async function ExpensesPage() {
                 </div>
               </div>
               <div className="font-medium text-[var(--ink)]">{formatCurrency(e.amount)}</div>
-            </Card>
+            </EditableCard>
           ))}
         </div>
       )}

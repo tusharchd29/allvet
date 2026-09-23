@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { StatusPill } from "@/components/StatusPill";
+import { EditableCard } from "../../_shared/EditableCard";
+import { CustomerEditForm } from "../CustomerEditForm";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +21,7 @@ export default async function CustomerDetailPage({
 
   const { data: customer } = await supabaseAdmin
     .from("av_customers")
-    .select("id, name, phone, address, segment")
+    .select("id, name, phone, address, segment, zone")
     .eq("id", id)
     .maybeSingle();
 
@@ -33,7 +35,7 @@ export default async function CustomerDetailPage({
 
   const { data: orders } = await supabaseAdmin
     .from("av_orders")
-    .select("id, product, quantity, amount, status, created_at")
+    .select("id, product, quantity, amount, status, created_at, payment_due_date, notes")
     .eq("customer_id", id)
     .order("created_at", { ascending: false });
 
@@ -41,18 +43,7 @@ export default async function CustomerDetailPage({
     <div>
       <PageHeader title={customer.name} subtitle={customer.segment ?? "General"} />
 
-      <Card className="mb-6">
-        <div className="text-sm space-y-1">
-          <div>
-            <span className="text-[var(--muted)]">Phone: </span>
-            {customer.phone ?? "—"}
-          </div>
-          <div>
-            <span className="text-[var(--muted)]">Address: </span>
-            {customer.address ?? "—"}
-          </div>
-        </div>
-      </Card>
+      <CustomerEditForm customer={customer} />
 
       <div className="font-medium text-[var(--ink)] mb-2">Orders</div>
       <div className="space-y-2 mb-6">
@@ -60,7 +51,27 @@ export default async function CustomerDetailPage({
           <div className="text-sm text-[var(--muted)]">No orders yet.</div>
         )}
         {(orders ?? []).map((o) => (
-          <Card key={o.id} className="flex items-center justify-between">
+          <EditableCard
+            key={o.id}
+            table="av_orders"
+            id={o.id}
+            revalidate={["/customers/" + id, "/orders", "/payments", "/dashboard"]}
+            initialValues={{
+              product: o.product,
+              quantity: o.quantity,
+              amount: o.amount,
+              notes: o.notes,
+              payment_due_date: o.payment_due_date,
+            }}
+            fields={[
+              { name: "product", label: "Product", type: "text" },
+              { name: "quantity", label: "Quantity", type: "text" },
+              { name: "amount", label: "Amount (₹)", type: "number" },
+              { name: "payment_due_date", label: "Payment due date", type: "date" },
+              { name: "notes", label: "Notes", type: "textarea" },
+            ]}
+            className="flex items-center justify-between"
+          >
             <div>
               <div className="text-sm text-[var(--ink)]">
                 {o.product} {o.quantity ? `· ${o.quantity}` : ""}
@@ -70,7 +81,7 @@ export default async function CustomerDetailPage({
               </div>
             </div>
             <StatusPill status={o.status} />
-          </Card>
+          </EditableCard>
         ))}
       </div>
 
@@ -80,7 +91,22 @@ export default async function CustomerDetailPage({
           <div className="text-sm text-[var(--muted)]">No visits logged yet.</div>
         )}
         {(visits ?? []).map((v) => (
-          <Card key={v.id}>
+          <EditableCard
+            key={v.id}
+            table="av_visits"
+            id={v.id}
+            revalidate={["/customers/" + id, "/visits"]}
+            initialValues={{
+              visit_date: v.visit_date,
+              purpose: v.purpose,
+              discussion_summary: v.discussion_summary,
+            }}
+            fields={[
+              { name: "visit_date", label: "Visit date", type: "date" },
+              { name: "purpose", label: "Purpose", type: "text" },
+              { name: "discussion_summary", label: "Discussion summary", type: "textarea" },
+            ]}
+          >
             <div className="text-sm text-[var(--ink)]">{v.purpose ?? "Visit"}</div>
             <div className="text-xs text-[var(--muted)] mt-0.5">
               {formatDate(v.visit_date)}
@@ -90,7 +116,7 @@ export default async function CustomerDetailPage({
                 {v.discussion_summary}
               </div>
             )}
-          </Card>
+          </EditableCard>
         ))}
       </div>
     </div>

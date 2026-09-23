@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
+import { EditableCard } from "../_shared/EditableCard";
 import { formatDate } from "@/lib/utils";
 import { createTrial } from "./actions";
 
@@ -83,7 +84,22 @@ export default async function TrialsPage() {
       ) : (
         <div className="space-y-2">
           {trials.map((t) => (
-            <Card key={t.id}>
+            <EditableCard
+              key={t.id}
+              table="av_product_trials"
+              id={t.id}
+              revalidate={["/trials"]}
+              initialValues={{
+                product: t.product,
+                trial_date: t.trial_date,
+                outcome_notes: t.outcome_notes,
+              }}
+              fields={[
+                { name: "product", label: "Product", type: "text" },
+                { name: "trial_date", label: "Date", type: "date" },
+                { name: "outcome_notes", label: "Outcome notes", type: "textarea" },
+              ]}
+            >
               <div className="font-medium text-[var(--ink)]">
                 {t.product} ·{" "}
                 {/* @ts-expect-error joined relation */}
@@ -93,7 +109,7 @@ export default async function TrialsPage() {
               {t.outcome_notes && (
                 <div className="text-sm text-[var(--ink)] mt-1">{t.outcome_notes}</div>
               )}
-            </Card>
+            </EditableCard>
           ))}
         </div>
       )}

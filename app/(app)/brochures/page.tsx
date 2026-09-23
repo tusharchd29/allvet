@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
+import { EditableCard } from "../_shared/EditableCard";
 import { createBrochure } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -46,19 +47,46 @@ export default async function BrochuresPage() {
         </Card>
       ) : (
         <div className="space-y-2">
-          {brochures.map((b) => (
-            <Card key={b.id} className="flex items-center justify-between">
-              <div className="font-medium text-[var(--ink)]">{b.title}</div>
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(`${b.title}: ${b.url}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-secondary text-xs px-3 py-1.5"
+          {brochures.map((b) =>
+            session.role === "owner" ? (
+              <EditableCard
+                key={b.id}
+                table="av_brochures"
+                id={b.id}
+                revalidate={["/brochures"]}
+                initialValues={{ title: b.title, url: b.url }}
+                fields={[
+                  { name: "title", label: "Title", type: "text" },
+                  { name: "url", label: "Link", type: "text" },
+                ]}
+                className="flex items-center justify-between"
               >
-                Share on WhatsApp
-              </a>
-            </Card>
-          ))}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="font-medium text-[var(--ink)]">{b.title}</div>
+                  <a
+                    href={`https://wa.me/?text=${encodeURIComponent(`${b.title}: ${b.url}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-secondary text-xs px-3 py-1.5 whitespace-nowrap"
+                  >
+                    Share on WhatsApp
+                  </a>
+                </div>
+              </EditableCard>
+            ) : (
+              <Card key={b.id} className="flex items-center justify-between">
+                <div className="font-medium text-[var(--ink)]">{b.title}</div>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(`${b.title}: ${b.url}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-secondary text-xs px-3 py-1.5"
+                >
+                  Share on WhatsApp
+                </a>
+              </Card>
+            ),
+          )}
         </div>
       )}
     </div>

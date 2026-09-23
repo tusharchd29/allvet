@@ -5,7 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
-import { formatDate } from "@/lib/utils";
+import { TravelRow } from "./TravelRow";
 import { createTravelLog } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -66,19 +66,19 @@ export default async function TravelPage() {
       ) : (
         <div className="space-y-2">
           {logs.map((l) => (
-            <Card key={l.id} className="flex items-center justify-between">
-              <div>
-                <div className="font-medium text-[var(--ink)]">{formatDate(l.travel_date)}</div>
-                <div className="text-sm text-[var(--muted)]">
-                  {l.start_km} → {l.end_km} km
-                  {session.role === "owner" && (
-                    // @ts-expect-error joined relation
-                    <> · {l.av_users?.name}</>
-                  )}
-                </div>
-              </div>
-              <div className="font-medium text-[var(--ink)]">{l.distance_km} km</div>
-            </Card>
+            <TravelRow
+              key={l.id}
+              log={{
+                id: l.id,
+                travel_date: l.travel_date,
+                start_km: l.start_km,
+                end_km: l.end_km,
+                distance_km: l.distance_km,
+                // @ts-expect-error joined relation
+                repName: l.av_users?.name,
+              }}
+              showRep={session.role === "owner"}
+            />
           ))}
         </div>
       )}

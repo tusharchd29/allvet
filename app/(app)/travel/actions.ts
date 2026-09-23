@@ -29,3 +29,28 @@ export async function createTravelLog(formData: FormData) {
   revalidatePath("/travel");
   redirect("/travel");
 }
+
+export async function updateTravelLog(
+  id: string,
+  data: { travel_date: string; start_km: number; end_km: number },
+) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  if (data.end_km < data.start_km) throw new Error("End km must be greater than start km");
+
+  const { error } = await supabaseAdmin
+    .from("av_travel_logs")
+    .update({
+      travel_date: data.travel_date,
+      start_km: data.start_km,
+      end_km: data.end_km,
+      distance_km: data.end_km - data.start_km,
+    })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/travel");
+  return { ok: true };
+}
