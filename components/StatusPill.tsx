@@ -1,15 +1,12 @@
-import { OrderStatus, STATUS_LABEL } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { STATUS_LABEL, type OrderStatus } from "@/lib/utils";
 
-export default function StatusPill({ status }: { status: OrderStatus }) {
+export function StatusPill({ status }: { status: string }) {
+  const s = status as OrderStatus;
   return (
     <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium",
-        `status-${status}`
-      )}
+      className={`status-${s} inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold`}
     >
-      {STATUS_LABEL[status]}
+      {STATUS_LABEL[s] ?? status}
     </span>
   );
 }

@@ -1,7 +1,7 @@
+import { NextResponse } from "next/server";
 import { clearSession } from "@/lib/session";
-import { redirect } from "next/navigation";
 
-export async function POST() {
+export async function POST(request: Request) {
   await clearSession();
-  redirect("/login");
+  return NextResponse.redirect(new URL("/login", request.url));
 }

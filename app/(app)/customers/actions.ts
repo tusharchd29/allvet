@@ -1,43 +1,35 @@
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getSession } from "@/lib/session";
 
 export async function createCustomer(formData: FormData) {
-  const session = (await getSession())!;
-  const name = String(formData.get("name") || "").trim();
-  const phone = String(formData.get("phone") || "").trim();
-  const address = String(formData.get("address") || "").trim();
-  const segment = String(formData.get("segment") || "").trim();
+  const session = await getSession();
+  if (!session) redirect("/login");
 
-  if (!name) return;
+  const name = String(formData.get("name") || "").trim();
+  const phone = String(formData.get("phone") || "").trim() || null;
+  const address = String(formData.get("address") || "").trim() || null;
+  const segment = String(formData.get("segment") || "").trim() || null;
+
+  if (!name) throw new Error("Name is required");
 
   if (segment) {
     await supabaseAdmin.from("av_segments").upsert({ name: segment }, { onConflict: "name" });
   }
 
-  await supabaseAdmin.from("av_customers").insert({
+  const { error } = await supabaseAdmin.from("av_customers").insert({
     name,
-    phone: phone || null,
-    address: address || null,
-    segment: segment || null,
+    phone,
+    address,
+    segment,
     rep_id: session.userId,
   });
 
+  if (error) throw new Error(error.message);
+
   revalidatePath("/customers");
   redirect("/customers");
-}
-
-export async function getOrCreateSegments() {
-  const { data } = await supabaseAdmin.from("av_segments").select("name").order("name");
-  return (data || []).map((d) => d.name);
-}
-
-export async function addSegment(name: string) {
-  const trimmed = name.trim();
-  if (!trimmed) return;
-  await supabaseAdmin.from("av_segments").upsert({ name: trimmed }, { onConflict: "name" });
-  revalidatePath("/customers/new");
 }

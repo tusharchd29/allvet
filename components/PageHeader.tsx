@@ -1,19 +1,19 @@
-import { ReactNode } from "react";
-
-export default function PageHeader({
+export function PageHeader({
   title,
   subtitle,
   action,
 }: {
   title: string;
   subtitle?: string;
-  action?: ReactNode;
+  action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 mb-6">
+    <div className="flex items-start justify-between gap-4 mb-5">
       <div>
-        <h1 className="font-display text-2xl font-semibold text-ink">{title}</h1>
-        {subtitle && <p className="text-sm text-muted mt-1">{subtitle}</p>}
+        <h1 className="text-xl font-semibold text-[var(--ink)]">{title}</h1>
+        {subtitle && (
+          <p className="text-sm text-[var(--muted)] mt-0.5">{subtitle}</p>
+        )}
       </div>
       {action}
     </div>

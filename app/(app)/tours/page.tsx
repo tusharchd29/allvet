@@ -1,57 +1,78 @@
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getRepScope } from "@/lib/data";
-import PageHeader from "@/components/PageHeader";
-import Card from "@/components/Card";
-import EmptyState from "@/components/EmptyState";
-import { createTourPlan } from "./actions";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { PageHeader } from "@/components/PageHeader";
+import { Card } from "@/components/Card";
+import { EmptyState } from "@/components/EmptyState";
 import { formatDate } from "@/lib/utils";
+import { createTourPlan } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function ToursPage() {
-  const session = (await getSession())!;
-  const repId = await getRepScope(session);
-  let q = supabaseAdmin.from("av_tours").select("id, week_start, plan_notes, av_users(name)").order("week_start", { ascending: false }).limit(20);
-  if (repId) q = q.eq("rep_id", repId);
-  const { data: tours } = await q;
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const repId = getRepScope(session);
+  const query = supabaseAdmin
+    .from("av_tours")
+    .select("id, week_start, plan_notes, av_users(name)")
+    .order("week_start", { ascending: false })
+    .limit(20);
+  if (repId) query.eq("rep_id", repId);
+  const { data: tours } = await query;
 
   return (
     <div>
-      <PageHeader title="Tour Planning" subtitle="Plan the week's visits in advance" />
+      <PageHeader title="Tour Plan" subtitle="Weekly territory plans" />
 
       <Card className="mb-6">
-        <form action={createTourPlan} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-ink block mb-1.5">Week starting</label>
-              <input name="week_start" type="date" required className="w-full h-10 rounded-lg border border-border px-3 text-sm outline-none focus:border-teal" />
-            </div>
+        <div className="font-medium text-[var(--ink)] mb-3">Plan a week</div>
+        <form action={createTourPlan} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+              Week starting
+            </label>
+            <input type="date" name="week_start" required className="input-field" />
           </div>
           <div>
-            <label className="text-xs font-medium text-ink block mb-1.5">Plan</label>
-            <textarea name="plan_notes" rows={3} required placeholder="Mon: Ambala clinics. Tue: Zirakpur farms…" className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-teal" />
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+              Plan
+            </label>
+            <textarea
+              name="plan_notes"
+              rows={3}
+              required
+              className="input-field"
+              placeholder="Which routes / customers this week"
+            />
           </div>
-          <button type="submit" className="h-10 px-4 rounded-lg bg-teal text-white text-sm font-medium">Save plan</button>
+          <button type="submit" className="btn-primary w-full py-2.5">
+            Save plan
+          </button>
         </form>
       </Card>
 
       {!tours || tours.length === 0 ? (
-        <EmptyState title="No tour plans yet" />
-      ) : (
-        <Card padded={false}>
-          <div className="divide-y divide-border/60">
-            {tours.map((t: any) => (
-              <div key={t.id} className="p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-medium text-ink">Week of {formatDate(t.week_start)}</p>
-                  {session.role === "owner" && t.av_users?.name && <p className="text-xs text-muted">{t.av_users.name}</p>}
-                </div>
-                <p className="text-sm text-muted whitespace-pre-line">{t.plan_notes}</p>
-              </div>
-            ))}
-          </div>
+        <Card>
+          <EmptyState icon="calendar" title="No tour plans yet" />
         </Card>
+      ) : (
+        <div className="space-y-2">
+          {tours.map((t) => (
+            <Card key={t.id}>
+              <div className="text-sm font-medium text-[var(--ink)]">
+                Week of {formatDate(t.week_start)}
+                {session.role === "owner" && (
+                  // @ts-expect-error joined relation
+                  <span className="text-[var(--muted)]"> · {t.av_users?.name}</span>
+                )}
+              </div>
+              <div className="text-sm text-[var(--ink)] mt-1">{t.plan_notes}</div>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );

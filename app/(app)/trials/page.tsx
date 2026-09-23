@@ -1,58 +1,101 @@
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getRepScope } from "@/lib/data";
-import PageHeader from "@/components/PageHeader";
-import Card from "@/components/Card";
-import EmptyState from "@/components/EmptyState";
-import { createTrial } from "./actions";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { PageHeader } from "@/components/PageHeader";
+import { Card } from "@/components/Card";
+import { EmptyState } from "@/components/EmptyState";
 import { formatDate } from "@/lib/utils";
+import { createTrial } from "./actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function TrialsPage() {
-  const session = (await getSession())!;
-  const repId = await getRepScope(session);
-  let cq = supabaseAdmin.from("av_customers").select("id, name").order("name");
-  if (repId) cq = cq.eq("rep_id", repId);
-  const { data: customers } = await cq;
-  let q = supabaseAdmin.from("av_product_trials").select("id, product, trial_date, outcome_notes, av_customers(name)").order("trial_date", { ascending: false }).limit(50);
-  if (repId) q = q.eq("rep_id", repId);
-  const { data: trials } = await q;
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const repId = getRepScope(session);
+  const customersQuery = supabaseAdmin.from("av_customers").select("id, name").order("name");
+  if (repId) customersQuery.eq("rep_id", repId);
+  const { data: customers } = await customersQuery;
+
+  const trialsQuery = supabaseAdmin
+    .from("av_product_trials")
+    .select("id, product, trial_date, outcome_notes, av_customers(name)")
+    .order("trial_date", { ascending: false })
+    .limit(30);
+  if (repId) trialsQuery.eq("rep_id", repId);
+  const { data: trials } = await trialsQuery;
 
   return (
     <div>
-      <PageHeader title="Product Trials" subtitle="Track new products placed with customers" />
+      <PageHeader title="Product Trials" subtitle="Track sample trials with customers" />
 
       <Card className="mb-6">
-        <form action={createTrial} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <select name="customer_id" required defaultValue="" className="h-10 rounded-lg border border-border px-3 text-sm bg-white outline-none focus:border-teal">
-              <option value="" disabled>Customer</option>
-              {(customers || []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        <div className="font-medium text-[var(--ink)] mb-3">Log a trial</div>
+        <form action={createTrial} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+              Customer
+            </label>
+            <select name="customer_id" required className="input-field" defaultValue="">
+              <option value="" disabled>
+                Select a customer
+              </option>
+              {(customers ?? []).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
             </select>
-            <input name="product" required placeholder="Product being trialled" className="h-10 rounded-lg border border-border px-3 text-sm outline-none focus:border-teal" />
           </div>
-          <textarea name="outcome_notes" rows={2} placeholder="Outcome so far (optional)" className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-teal" />
-          <button type="submit" className="h-10 px-4 rounded-lg bg-teal text-white text-sm font-medium">Log trial</button>
+          <div>
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+              Product
+            </label>
+            <input name="product" required className="input-field" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1">Date</label>
+            <input
+              type="date"
+              name="trial_date"
+              className="input-field"
+              defaultValue={new Date().toISOString().slice(0, 10)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+              Outcome notes
+            </label>
+            <textarea name="outcome_notes" rows={2} className="input-field" placeholder="Optional" />
+          </div>
+          <button type="submit" className="btn-primary w-full py-2.5">
+            Save trial
+          </button>
         </form>
       </Card>
 
       {!trials || trials.length === 0 ? (
-        <EmptyState title="No product trials logged yet" />
-      ) : (
-        <Card padded={false}>
-          <div className="divide-y divide-border/60">
-            {trials.map((t: any) => (
-              <div key={t.id} className="p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-ink">{t.product} · {t.av_customers?.name}</p>
-                  <p className="text-xs text-muted">{formatDate(t.trial_date)}</p>
-                </div>
-                {t.outcome_notes && <p className="text-sm text-muted mt-1">{t.outcome_notes}</p>}
-              </div>
-            ))}
-          </div>
+        <Card>
+          <EmptyState icon="flask-conical" title="No trials logged yet" />
         </Card>
+      ) : (
+        <div className="space-y-2">
+          {trials.map((t) => (
+            <Card key={t.id}>
+              <div className="font-medium text-[var(--ink)]">
+                {t.product} ·{" "}
+                {/* @ts-expect-error joined relation */}
+                {t.av_customers?.name}
+              </div>
+              <div className="text-sm text-[var(--muted)]">{formatDate(t.trial_date)}</div>
+              {t.outcome_notes && (
+                <div className="text-sm text-[var(--ink)] mt-1">{t.outcome_notes}</div>
+              )}
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );

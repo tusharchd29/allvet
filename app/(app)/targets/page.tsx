@@ -1,74 +1,139 @@
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import PageHeader from "@/components/PageHeader";
-import Card from "@/components/Card";
-import ProgressBar from "@/components/ProgressBar";
-import { setTarget } from "./actions";
+import { PageHeader } from "@/components/PageHeader";
+import { Card } from "@/components/Card";
+import { ProgressBar } from "@/components/ProgressBar";
 import { formatCurrency } from "@/lib/utils";
+import { setTarget } from "./actions";
 
 export const dynamic = "force-dynamic";
 
+function monthStart(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export default async function TargetsPage() {
-  const session = (await getSession())!;
-  const periodMonth = new Date();
-  periodMonth.setDate(1);
-  const period = periodMonth.toISOString().slice(0, 10);
-  const monthLabel = periodMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+  const session = await getSession();
+  if (!session) redirect("/login");
 
-  const { data: reps } = await supabaseAdmin.from("av_users").select("id, name").eq("role", "rep").eq("active", true).order("name");
-  const { data: targets } = await supabaseAdmin.from("av_targets").select("rep_id, target_amount").eq("period_month", period);
+  const currentMonth = monthStart();
+  const monthStartDate = `${currentMonth}-01`;
 
-  const { data: orders } = await supabaseAdmin
+  const repId = session.role === "owner" ? null : session.userId;
+
+  const targetsQuery = supabaseAdmin
+    .from("av_targets")
+    .select("id, rep_id, period_month, target_amount, av_users(name)")
+    .eq("period_month", monthStartDate);
+  if (repId) targetsQuery.eq("rep_id", repId);
+  const { data: targets } = await targetsQuery;
+
+  const ordersQuery = supabaseAdmin
     .from("av_orders")
-    .select("rep_id, amount, status")
-    .gte("created_at", period)
-    .eq("status", "fulfilled");
+    .select("rep_id, amount, status, created_at")
+    .eq("status", "fulfilled")
+    .gte("created_at", monthStartDate);
+  if (repId) ordersQuery.eq("rep_id", repId);
+  const { data: orders } = await ordersQuery;
 
-  const rows = (session.role === "owner" ? reps || [] : (reps || []).filter((r) => r.id === session.userId)).map((r) => {
-    const target = targets?.find((t) => t.rep_id === r.id)?.target_amount || 0;
-    const fulfilled = (orders || []).filter((o) => o.rep_id === r.id).reduce((s, o) => s + Number(o.amount || 0), 0);
-    const pct = target > 0 ? Math.round((fulfilled / target) * 100) : 0;
-    return { ...r, target, fulfilled, pct };
-  });
+  const fulfilledByRep = new Map<string, number>();
+  for (const o of orders ?? []) {
+    fulfilledByRep.set(o.rep_id, (fulfilledByRep.get(o.rep_id) ?? 0) + (o.amount ?? 0));
+  }
+
+  let reps: Array<{ id: string; name: string }> = [];
+  if (session.role === "owner") {
+    const { data } = await supabaseAdmin
+      .from("av_users")
+      .select("id, name")
+      .eq("role", "rep")
+      .order("name");
+    reps = data ?? [];
+  }
 
   return (
     <div>
-      <PageHeader title="Targets" subtitle={monthLabel} />
+      <PageHeader
+        title="Targets"
+        subtitle="Counts only orders marked Fulfilled — not just placed"
+      />
 
-      <Card padded={false}>
-        <div className="divide-y divide-border/60">
-          {rows.map((r) => (
-            <div key={r.id} className="p-5">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-ink">{r.name}</p>
-                <p className="text-sm text-muted">
-                  {formatCurrency(r.fulfilled)}{r.target > 0 && <span> / {formatCurrency(r.target)}</span>}
-                </p>
+      <div className="space-y-3 mb-6">
+        {(targets ?? []).map((t) => {
+          const fulfilled = fulfilledByRep.get(t.rep_id) ?? 0;
+          const pct = Math.min(100, Math.round((fulfilled / t.target_amount) * 100));
+          return (
+            <Card key={t.id}>
+              <div className="flex items-center justify-between text-sm mb-2">
+                {/* @ts-expect-error joined relation */}
+                <span className="font-medium text-[var(--ink)]">{t.av_users?.name}</span>
+                <span className="text-[var(--muted)]">
+                  {formatCurrency(fulfilled)} / {formatCurrency(t.target_amount)}
+                </span>
               </div>
-              <ProgressBar pct={r.pct} />
-              <p className="text-xs text-muted mt-2">Fulfilled orders only — pipeline orders don&apos;t count yet.</p>
+              <ProgressBar pct={pct} />
+            </Card>
+          );
+        })}
+        {(!targets || targets.length === 0) && (
+          <div className="text-sm text-[var(--muted)]">
+            No target set for this month yet.
+          </div>
+        )}
+      </div>
 
-              {session.role === "owner" && (
-                <form action={setTarget} className="flex items-center gap-2 mt-3">
-                  <input type="hidden" name="rep_id" value={r.id} />
-                  <input
-                    name="target_amount"
-                    type="number"
-                    min="0"
-                    step="1"
-                    defaultValue={r.target || ""}
-                    placeholder="Set target (₹)"
-                    className="h-9 rounded-lg border border-border px-3 text-sm focus:border-teal outline-none w-40"
-                  />
-                  <button type="submit" className="h-9 px-3.5 rounded-lg bg-ink text-white text-xs font-medium">
-                    Save
-                  </button>
-                </form>
-              )}
+      {session.role === "owner" && (
+        <Card>
+          <div className="font-medium text-[var(--ink)] mb-3">Set a target</div>
+          <form action={setTarget} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+                Rep
+              </label>
+              <select name="rep_id" required className="input-field" defaultValue="">
+                <option value="" disabled>
+                  Select a rep
+                </option>
+                {reps.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
             </div>
-          ))}
-        </div>
-      </Card>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+                  Month
+                </label>
+                <input
+                  type="month"
+                  name="period_month"
+                  className="input-field"
+                  defaultValue={currentMonth}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+                  Target (₹)
+                </label>
+                <input
+                  type="number"
+                  name="target_amount"
+                  className="input-field"
+                  placeholder="150000"
+                  required
+                />
+              </div>
+            </div>
+            <button type="submit" className="btn-primary w-full py-2.5">
+              Save target
+            </button>
+          </form>
+        </Card>
+      )}
     </div>
   );
 }

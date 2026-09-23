@@ -1,31 +1,39 @@
-# Allvet — Field Sales Operations
+# Allvet Field Ops
 
-Next.js + Supabase field ops app for a 5-person team (1 owner, 4 reps).
+A mobile-first field sales app for a 5-person veterinary supply team (1 owner + 4 reps): customer visits, sales orders with a Pending → Confirmed → Dispatched → Fulfilled lifecycle, monthly targets (counted only from fulfilled orders), expenses, advances, tour plans, travel logs, product trials, competitor intel, and shareable brochures.
 
 ## Stack
-- Next.js 16 (App Router, TypeScript, Tailwind v4)
-- Supabase (Postgres) — tables prefixed `av_` in a shared project
-- PIN-based auth with a signed session cookie (no Supabase Auth) — access
-  control is enforced in server actions, see `lib/session.ts` and `lib/data.ts`
 
-## Features
-Customers · Visits · Orders (Pending → Confirmed → Dispatched → Fulfilled)
-· Targets (fulfilled-only) · Expenses · Advances · Tour Planning
-· Travel & Location · Product Trials · Competitor Intel · Brochures · Reports
-
-## Setup
-1. Run `supabase/schema.sql` against your Supabase project.
-2. Seed `av_users` with the owner + 4 reps (name, pin, role).
-3. Copy `.env.example` to `.env.local` and fill in the values.
-4. `npm install && npm run dev`
+- Next.js 16 (App Router, Server Actions)
+- Supabase (Postgres) — shared project, `av_` table prefix
+- Custom 4-digit PIN login with a signed HMAC session cookie (no Supabase Auth — the team is small and fixed)
+- Tailwind CSS v4
 
 ## Environment variables
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `SESSION_SECRET` — any long random string, used to sign the login cookie
 
-## Notes
-- Both rep and owner can advance an order's status (no approval gate) — mirrors how the team actually works.
-- Targets only credit **fulfilled** orders, not pending/confirmed ones — keeps the numbers honest.
-- Reports (AI-polished visit summaries) needs an AI provider key wired in before it's live — see `app/(app)/reports/page.tsx`.
+- `NEXT_PUBLIC_SUPABASE_URL` — the Supabase project URL
+- `SUPABASE_ANON_KEY` — server-only; the app authorizes access at the application layer (PIN session) rather than through Supabase Auth, so the `av_*` tables carry a permissive RLS policy scoping access to this key
+- `SESSION_SECRET` — a long random string used to sign the session cookie
+
+`lib/supabase-admin.ts` and `lib/session.ts` currently carry hardcoded fallback
+values for these three, used only if the env vars are unset — a temporary
+stopgap from when the deploying session couldn't set Vercel project env
+vars. Set the real env vars on Vercel and remove those fallbacks when you get
+a chance.
+
+## Local development
+
+```bash
+npm install
+cp .env.example .env.local   # fill in the values, if present
+npm run dev
+```
+
+## Users
+
+Seeded in the `av_users` table — each person has a name, a 4-digit PIN, and
+a role (`owner` or `rep`). Update PINs before rolling out to the real team.
+
+## Live deployment
+
+https://allvet.vercel.app

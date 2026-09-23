@@ -1,53 +1,75 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
 
-// Small internal team app (5 users), PIN-based — not Supabase Auth.
-// Session is a signed cookie so it can't be forged client-side; all data
-// access is authorized in server actions/pages by checking this session,
-// not by database-level RLS.
+export type Role = "owner" | "rep";
 
 export type Session = {
   userId: string;
   name: string;
-  role: "owner" | "rep";
+  role: Role;
 };
 
-const SECRET = process.env.SESSION_SECRET || "allvet-dev-secret-change-me";
 const COOKIE_NAME = "allvet_session";
+const MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
-function sign(payload: string) {
-  return crypto.createHmac("sha256", SECRET).update(payload).digest("hex");
+// NOTE: temporary stopgap fallback — see lib/supabase-admin.ts note. Set a
+// real SESSION_SECRET env var on Vercel and remove this hardcoded fallback
+// once done.
+function getSecret(): string {
+  return (
+    process.env.SESSION_SECRET ||
+    "248e3f938aab671229bbb7d4b6402e39dd7e781694e4b629e7715ee4330d8bbe"
+  );
+}
+
+function sign(payload: string): string {
+  return crypto.createHmac("sha256", getSecret()).update(payload).digest("hex");
+}
+
+export function encodeSession(session: Session): string {
+  const payload = Buffer.from(JSON.stringify(session)).toString("base64url");
+  const sig = sign(payload);
+  return `${payload}.${sig}`;
+}
+
+export function decodeSession(token: string | undefined): Session | null {
+  if (!token) return null;
+  const [payload, sig] = token.split(".");
+  if (!payload || !sig) return null;
+  const expected = sign(payload);
+  if (
+    expected.length !== sig.length ||
+    !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(sig))
+  ) {
+    return null;
+  }
+  try {
+    const json = Buffer.from(payload, "base64url").toString("utf8");
+    return JSON.parse(json) as Session;
+  } catch {
+    return null;
+  }
 }
 
 export async function createSession(session: Session) {
-  const payload = JSON.stringify(session);
-  const encoded = Buffer.from(payload).toString("base64url");
-  const sig = sign(encoded);
   const store = await cookies();
-  store.set(COOKIE_NAME, `${encoded}.${sig}`, {
+  store.set(COOKIE_NAME, encodeSession(session), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30, // 30 days — field reps shouldn't have to re-login often
+    maxAge: MAX_AGE,
   });
 }
 
 export async function getSession(): Promise<Session | null> {
   const store = await cookies();
-  const raw = store.get(COOKIE_NAME)?.value;
-  if (!raw) return null;
-  const [encoded, sig] = raw.split(".");
-  if (!encoded || !sig) return null;
-  if (sign(encoded) !== sig) return null;
-  try {
-    return JSON.parse(Buffer.from(encoded, "base64url").toString("utf8"));
-  } catch {
-    return null;
-  }
+  return decodeSession(store.get(COOKIE_NAME)?.value);
 }
 
 export async function clearSession() {
   const store = await cookies();
   store.delete(COOKIE_NAME);
 }
+
+export const SESSION_COOKIE_NAME = COOKIE_NAME;

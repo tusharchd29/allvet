@@ -1,94 +1,97 @@
+import { redirect, notFound } from "next/navigation";
+import { getSession } from "@/lib/session";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import PageHeader from "@/components/PageHeader";
-import Card from "@/components/Card";
-import EmptyState from "@/components/EmptyState";
-import StatusPill from "@/components/StatusPill";
-import Link from "next/link";
-import { ChevronLeft, Phone, MapPin as MapPinIcon } from "lucide-react";
-import { formatDate } from "@/lib/utils";
-import { notFound } from "next/navigation";
+import { PageHeader } from "@/components/PageHeader";
+import { Card } from "@/components/Card";
+import { StatusPill } from "@/components/StatusPill";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CustomerDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const session = await getSession();
+  if (!session) redirect("/login");
   const { id } = await params;
 
-  const { data: customer } = await supabaseAdmin.from("av_customers").select("*").eq("id", id).maybeSingle();
+  const { data: customer } = await supabaseAdmin
+    .from("av_customers")
+    .select("id, name, phone, address, segment")
+    .eq("id", id)
+    .maybeSingle();
+
   if (!customer) notFound();
 
   const { data: visits } = await supabaseAdmin
     .from("av_visits")
     .select("id, visit_date, purpose, discussion_summary")
     .eq("customer_id", id)
-    .order("visit_date", { ascending: false })
-    .limit(10);
+    .order("visit_date", { ascending: false });
 
   const { data: orders } = await supabaseAdmin
     .from("av_orders")
     .select("id, product, quantity, amount, status, created_at")
     .eq("customer_id", id)
-    .order("created_at", { ascending: false })
-    .limit(10);
+    .order("created_at", { ascending: false });
 
   return (
     <div>
-      <Link href="/customers" className="inline-flex items-center gap-1 text-sm text-muted mb-4">
-        <ChevronLeft size={15} /> Customers
-      </Link>
-      <PageHeader
-        title={customer.name}
-        subtitle={customer.segment || undefined}
-      />
+      <PageHeader title={customer.name} subtitle={customer.segment ?? "General"} />
 
-      <div className="flex flex-wrap gap-3 mb-6 text-sm text-muted">
-        {customer.phone && <span className="flex items-center gap-1.5"><Phone size={14} /> {customer.phone}</span>}
-        {customer.address && <span className="flex items-center gap-1.5"><MapPinIcon size={14} /> {customer.address}</span>}
+      <Card className="mb-6">
+        <div className="text-sm space-y-1">
+          <div>
+            <span className="text-[var(--muted)]">Phone: </span>
+            {customer.phone ?? "—"}
+          </div>
+          <div>
+            <span className="text-[var(--muted)]">Address: </span>
+            {customer.address ?? "—"}
+          </div>
+        </div>
+      </Card>
+
+      <div className="font-medium text-[var(--ink)] mb-2">Orders</div>
+      <div className="space-y-2 mb-6">
+        {(orders ?? []).length === 0 && (
+          <div className="text-sm text-[var(--muted)]">No orders yet.</div>
+        )}
+        {(orders ?? []).map((o) => (
+          <Card key={o.id} className="flex items-center justify-between">
+            <div>
+              <div className="text-sm text-[var(--ink)]">
+                {o.product} {o.quantity ? `· ${o.quantity}` : ""}
+              </div>
+              <div className="text-xs text-[var(--muted)]">
+                {formatDate(o.created_at)} · {formatCurrency(o.amount)}
+              </div>
+            </div>
+            <StatusPill status={o.status} />
+          </Card>
+        ))}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card padded={false}>
-          <div className="p-5 border-b border-border/60 flex items-center justify-between">
-            <p className="font-medium text-ink">Visits</p>
-            <Link href={`/visits/new?customer=${id}`} className="text-sm text-teal font-medium">Log visit</Link>
-          </div>
-          {!visits || visits.length === 0 ? (
-            <div className="p-5"><EmptyState title="No visits yet" /></div>
-          ) : (
-            <div className="divide-y divide-border/60">
-              {visits.map((v) => (
-                <div key={v.id} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-ink">{v.purpose || "Visit"}</p>
-                    <p className="text-xs text-muted">{formatDate(v.visit_date)}</p>
-                  </div>
-                  {v.discussion_summary && <p className="text-xs text-muted mt-1">{v.discussion_summary}</p>}
-                </div>
-              ))}
+      <div className="font-medium text-[var(--ink)] mb-2">Visits</div>
+      <div className="space-y-2">
+        {(visits ?? []).length === 0 && (
+          <div className="text-sm text-[var(--muted)]">No visits logged yet.</div>
+        )}
+        {(visits ?? []).map((v) => (
+          <Card key={v.id}>
+            <div className="text-sm text-[var(--ink)]">{v.purpose ?? "Visit"}</div>
+            <div className="text-xs text-[var(--muted)] mt-0.5">
+              {formatDate(v.visit_date)}
             </div>
-          )}
-        </Card>
-
-        <Card padded={false}>
-          <div className="p-5 border-b border-border/60 flex items-center justify-between">
-            <p className="font-medium text-ink">Orders</p>
-            <Link href={`/orders/new?customer=${id}`} className="text-sm text-teal font-medium">New order</Link>
-          </div>
-          {!orders || orders.length === 0 ? (
-            <div className="p-5"><EmptyState title="No orders yet" /></div>
-          ) : (
-            <div className="divide-y divide-border/60">
-              {orders.map((o) => (
-                <div key={o.id} className="p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-ink">{o.product}{o.quantity ? ` · ${o.quantity}` : ""}</p>
-                    <p className="text-xs text-muted mt-0.5">{formatDate(o.created_at)}</p>
-                  </div>
-                  <StatusPill status={o.status} />
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+            {v.discussion_summary && (
+              <div className="text-sm text-[var(--ink)] mt-2">
+                {v.discussion_summary}
+              </div>
+            )}
+          </Card>
+        ))}
       </div>
     </div>
   );

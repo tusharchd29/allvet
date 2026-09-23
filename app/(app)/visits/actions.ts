@@ -1,32 +1,37 @@
 "use server";
 
-import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getSession } from "@/lib/session";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { getSession } from "@/lib/session";
 
 export async function createVisit(formData: FormData) {
-  const session = (await getSession())!;
-  const customerId = String(formData.get("customer_id") || "");
-  const purpose = String(formData.get("purpose") || "").trim();
-  const discussion = String(formData.get("discussion_summary") || "").trim();
-  const followUp = formData.get("follow_up_required") === "on";
-  const nextVisitDate = String(formData.get("next_visit_date") || "") || null;
+  const session = await getSession();
+  if (!session) redirect("/login");
 
-  if (!customerId) return;
+  const customer_id = String(formData.get("customer_id") || "");
+  const purpose = String(formData.get("purpose") || "").trim() || null;
+  const discussion_summary =
+    String(formData.get("discussion_summary") || "").trim() || null;
+  const follow_up_required = formData.get("follow_up_required") === "on";
+  const next_visit_date = String(formData.get("next_visit_date") || "") || null;
+  const visit_date =
+    String(formData.get("visit_date") || "") || new Date().toISOString().slice(0, 10);
 
-  await supabaseAdmin.from("av_visits").insert({
-    customer_id: customerId,
+  if (!customer_id) throw new Error("Customer is required");
+
+  const { error } = await supabaseAdmin.from("av_visits").insert({
+    customer_id,
     rep_id: session.userId,
-    visit_date: new Date().toISOString().slice(0, 10),
-    purpose: purpose || null,
-    discussion_summary: discussion || null,
-    follow_up_required: followUp,
-    next_visit_date: nextVisitDate,
+    visit_date,
+    purpose,
+    discussion_summary,
+    follow_up_required,
+    next_visit_date,
   });
 
+  if (error) throw new Error(error.message);
+
   revalidatePath("/visits");
-  revalidatePath("/dashboard");
-  revalidatePath(`/customers/${customerId}`);
   redirect("/visits");
 }

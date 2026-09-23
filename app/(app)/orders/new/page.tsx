@@ -1,61 +1,70 @@
+import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getRepScope } from "@/lib/data";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { PageHeader } from "@/components/PageHeader";
+import { Card } from "@/components/Card";
 import { createOrder } from "../actions";
-import PageHeader from "@/components/PageHeader";
-import Card from "@/components/Card";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewOrderPage({ searchParams }: { searchParams: Promise<{ customer?: string }> }) {
-  const session = (await getSession())!;
-  const repId = await getRepScope(session);
-  const { customer } = await searchParams;
+export default async function NewOrderPage() {
+  const session = await getSession();
+  if (!session) redirect("/login");
 
-  let q = supabaseAdmin.from("av_customers").select("id, name").order("name");
-  if (repId) q = q.eq("rep_id", repId);
-  const { data: customers } = await q;
+  const repId = getRepScope(session);
+  const query = supabaseAdmin.from("av_customers").select("id, name").order("name");
+  if (repId) query.eq("rep_id", repId);
+  const { data: customers } = await query;
 
   return (
-    <div className="max-w-lg">
-      <Link href="/orders" className="inline-flex items-center gap-1 text-sm text-muted mb-4">
-        <ChevronLeft size={15} /> Orders
-      </Link>
-      <PageHeader title="New order" subtitle="Starts as Pending — you can move it forward from the Orders list" />
-
+    <div>
+      <PageHeader title="New order" />
       <Card>
         <form action={createOrder} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-ink block mb-1.5">Customer</label>
-            <select name="customer_id" required defaultValue={customer || ""} className="w-full h-11 rounded-xl border border-border px-3.5 text-sm focus:border-teal outline-none bg-white">
-              <option value="" disabled>Select a customer</option>
-              {(customers || []).map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+              Customer
+            </label>
+            <select name="customer_id" required className="input-field" defaultValue="">
+              <option value="" disabled>
+                Select a customer
+              </option>
+              {(customers ?? []).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="text-sm font-medium text-ink block mb-1.5">Product</label>
-            <input name="product" required className="w-full h-11 rounded-xl border border-border px-3.5 text-sm focus:border-teal outline-none" />
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+              Product
+            </label>
+            <input name="product" required className="input-field" placeholder="e.g. Calcium bolus" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm font-medium text-ink block mb-1.5">Quantity</label>
-              <input name="quantity" className="w-full h-11 rounded-xl border border-border px-3.5 text-sm focus:border-teal outline-none" placeholder="e.g. 10 units" />
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+                Quantity
+              </label>
+              <input name="quantity" className="input-field" placeholder="e.g. 20 boxes" />
             </div>
             <div>
-              <label className="text-sm font-medium text-ink block mb-1.5">Amount (₹)</label>
-              <input name="amount" type="number" min="0" step="1" className="w-full h-11 rounded-xl border border-border px-3.5 text-sm focus:border-teal outline-none" />
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+                Amount (₹)
+              </label>
+              <input name="amount" type="number" step="0.01" className="input-field" placeholder="0" />
             </div>
           </div>
           <div>
-            <label className="text-sm font-medium text-ink block mb-1.5">Notes</label>
-            <textarea name="notes" rows={3} className="w-full rounded-xl border border-border px-3.5 py-2.5 text-sm focus:border-teal outline-none" placeholder="Optional" />
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+              Notes
+            </label>
+            <textarea name="notes" rows={2} className="input-field" placeholder="Optional" />
           </div>
-          <button type="submit" className="w-full h-11 rounded-xl bg-teal text-white text-sm font-medium mt-2">
-            Save order
+          <button type="submit" className="btn-primary w-full py-2.5">
+            Create order
           </button>
         </form>
       </Card>

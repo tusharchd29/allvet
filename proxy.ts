@@ -1,21 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { decodeSession, SESSION_COOKIE_NAME } from "@/lib/session";
 
-// Presence check only (fast, edge-safe). Full signature verification and
-// role checks happen server-side in lib/session.ts on each page/action.
-export function proxy(req: NextRequest) {
-  const hasSession = req.cookies.has("allvet_session");
-  const { pathname } = req.nextUrl;
+export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const session = decodeSession(token);
 
-  if (!hasSession && pathname !== "/login") {
-    const url = req.nextUrl.clone();
+  const isLoginPage = pathname === "/login";
+
+  if (!session && !isLoginPage) {
+    const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
-  if (hasSession && pathname === "/login") {
-    const url = req.nextUrl.clone();
+
+  if (session && isLoginPage) {
+    const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
+
   return NextResponse.next();
 }
 

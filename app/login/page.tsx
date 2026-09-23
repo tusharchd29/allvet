@@ -5,82 +5,94 @@ import { loginWithPin } from "./actions";
 
 export default function LoginPage() {
   const [pin, setPin] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function submit() {
-    setError("");
-    startTransition(async () => {
-      const res = await loginWithPin(pin);
-      if (res?.error) setError(res.error);
-    });
-  }
-
   function press(digit: string) {
-    if (digit === "back") {
-      setPin((p) => p.slice(0, -1));
-      return;
-    }
-    if (pin.length >= 6) return;
+    setError(null);
+    if (pin.length >= 4) return;
     const next = pin + digit;
     setPin(next);
-    if (next.length >= 4) {
-      // auto-submit once a plausible PIN length is reached, but let people
-      // keep typing up to 6 digits before locking in
+    if (next.length === 4) {
+      startTransition(async () => {
+        const result = await loginWithPin(next);
+        if (result && !result.ok) {
+          setError(result.message);
+          setPin("");
+        }
+      });
     }
+  }
+
+  function backspace() {
+    setError(null);
+    setPin((p) => p.slice(0, -1));
   }
 
   return (
-    <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-6">
+    <main className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-[var(--offwhite)]">
       <div className="w-full max-w-xs">
-        <p className="font-display text-3xl font-semibold text-white text-center">Allvet</p>
-        <p className="text-white/50 text-sm text-center mt-2 mb-10">Enter your PIN to continue</p>
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-14 h-14 rounded-2xl bg-[var(--teal)] flex items-center justify-center text-white text-xl font-bold mb-4">
+            AV
+          </div>
+          <h1 className="text-xl font-semibold text-[var(--ink)]">Allvet</h1>
+          <p className="text-sm text-[var(--muted)] mt-1">
+            Enter your 4-digit PIN
+          </p>
+        </div>
 
-        <div className="flex justify-center gap-3 mb-8" aria-live="polite">
-          {Array.from({ length: 6 }).map((_, i) => (
+        <div className="flex justify-center gap-3 mb-2" aria-live="polite">
+          {[0, 1, 2, 3].map((i) => (
             <div
               key={i}
-              className={`h-3 w-3 rounded-full border border-white/30 ${
-                i < pin.length ? "bg-mint border-mint" : ""
+              className={`w-12 h-12 rounded-xl border flex items-center justify-center text-lg font-semibold ${
+                i < pin.length
+                  ? "border-[var(--teal)] bg-white text-[var(--ink)]"
+                  : "border-[var(--border)] bg-white text-transparent"
               }`}
-            />
+            >
+              {i < pin.length ? "•" : "0"}
+            </div>
           ))}
         </div>
 
-        {error && (
-          <p className="text-center text-sm text-[#ff8a80] mb-4" role="alert">
-            {error}
-          </p>
-        )}
-
-        <div className="grid grid-cols-3 gap-3">
-          {["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "back"].map((d, i) =>
-            d === "" ? (
-              <div key={i} />
-            ) : (
-              <button
-                key={i}
-                type="button"
-                onClick={() => press(d)}
-                disabled={pending}
-                aria-label={d === "back" ? "Delete" : `Digit ${d}`}
-                className="h-16 rounded-2xl bg-white/5 text-white text-xl font-medium active:bg-white/15 transition-colors disabled:opacity-40"
-              >
-                {d === "back" ? "⌫" : d}
-              </button>
-            )
-          )}
+        <div className="h-6 text-center text-sm text-[var(--danger)] mb-4">
+          {pending ? "Checking…" : error}
         </div>
 
-        <button
-          type="button"
-          onClick={submit}
-          disabled={pin.length < 4 || pending}
-          className="w-full mt-6 h-12 rounded-xl bg-mint text-ink font-semibold disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
-        >
-          {pending ? "Checking…" : "Log in"}
-        </button>
+        <div className="grid grid-cols-3 gap-3">
+          {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
+            <button
+              key={d}
+              type="button"
+              disabled={pending}
+              onClick={() => press(d)}
+              className="btn-secondary h-14 text-lg"
+            >
+              {d}
+            </button>
+          ))}
+          <div />
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => press("0")}
+            className="btn-secondary h-14 text-lg"
+          >
+            0
+          </button>
+          <button
+            type="button"
+            disabled={pending || pin.length === 0}
+            onClick={backspace}
+            className="btn-secondary h-14 text-lg"
+            aria-label="Backspace"
+          >
+            ⌫
+          </button>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

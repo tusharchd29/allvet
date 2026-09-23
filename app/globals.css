@@ -1,59 +1,122 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #13322b;
-  --ink-soft: #1d4a44;
   --teal: #028090;
   --seafoam: #00a896;
   --mint: #02c39a;
+  --ink: #13322b;
   --offwhite: #f4f9f8;
   --muted: #6b7c79;
   --border: #d8e8e5;
+  --white: #ffffff;
   --danger: #c0392b;
   --warn: #b8860b;
 }
 
-@theme inline {
-  --color-ink: var(--ink);
-  --color-ink-soft: var(--ink-soft);
-  --color-teal: var(--teal);
-  --color-seafoam: var(--seafoam);
-  --color-mint: var(--mint);
-  --color-offwhite: var(--offwhite);
-  --color-muted: var(--muted);
-  --color-border: var(--border);
-  --color-danger: var(--danger);
-  --color-warn: var(--warn);
-  --font-display: Georgia, "Times New Roman", ui-serif, serif;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
   background: var(--offwhite);
   color: var(--ink);
-  font-family: var(--font-sans);
-  -webkit-tap-highlight-color: transparent;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-* {
-  -webkit-font-smoothing: antialiased;
+a {
+  color: inherit;
+}
+
+.status-pending {
+  background: #fdf3e0;
+  color: #8a6100;
+}
+.status-confirmed {
+  background: #e3f1fb;
+  color: #1c5d8a;
+}
+.status-dispatched {
+  background: #eae3fb;
+  color: #5a3d99;
+}
+.status-fulfilled {
+  background: #e2f8ef;
+  color: #037a4e;
+}
+
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.btn-primary {
+  background: var(--teal);
+  color: white;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+.btn-primary:hover {
+  background: var(--ink);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-weight: 600;
+}
+.btn-secondary:hover {
+  background: var(--offwhite);
+}
+
+.input-field {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem;
+  background: var(--white);
+  color: var(--ink);
+  width: 100%;
+  font-size: 0.95rem;
+}
+.input-field:focus-visible {
+  outline: 2px solid var(--seafoam);
+  outline-offset: 1px;
 }
 
 :focus-visible {
-  outline: 2px solid var(--teal);
+  outline: 2px solid var(--seafoam);
   outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
 
-/* Status pill colors - reused everywhere an order status appears */
-.status-pending { background: #eef2f1; color: var(--muted); }
-.status-confirmed { background: #e6f4f6; color: var(--teal); }
-.status-dispatched { background: #dcf0ec; color: var(--ink-soft); }
-.status-fulfilled { background: #d7f7ee; color: #017a5c; }
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+}

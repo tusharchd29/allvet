@@ -1,27 +1,20 @@
 "use client";
 
-import { useTransition } from "react";
-import StatusPill from "@/components/StatusPill";
-import { updateOrderStatus } from "./actions";
-import { OrderStatus, ORDER_STATUSES, formatCurrency, formatDate } from "@/lib/utils";
+import { useState, useTransition } from "react";
+import { Card } from "@/components/Card";
+import { StatusPill } from "@/components/StatusPill";
+import { formatCurrency, formatDate, type OrderStatus } from "@/lib/utils";
+import { advanceOrderStatus } from "./actions";
 
-const NEXT_STATUS: Record<OrderStatus, OrderStatus | null> = {
-  pending: "confirmed",
-  confirmed: "dispatched",
-  dispatched: "fulfilled",
+const NEXT_LABEL: Record<OrderStatus, string | null> = {
+  pending: "Confirm order",
+  confirmed: "Mark dispatched",
+  dispatched: "Mark fulfilled",
   fulfilled: null,
 };
 
-const NEXT_LABEL: Record<OrderStatus, string> = {
-  pending: "Confirm",
-  confirmed: "Mark dispatched",
-  dispatched: "Mark fulfilled",
-  fulfilled: "",
-};
-
-export default function OrderRow({
+export function OrderRow({
   order,
-  showRep,
 }: {
   order: {
     id: string;
@@ -31,36 +24,52 @@ export default function OrderRow({
     status: OrderStatus;
     created_at: string;
     customerName: string;
-    repName?: string;
   };
-  showRep: boolean;
 }) {
+  const [status, setStatus] = useState(order.status);
   const [pending, startTransition] = useTransition();
-  const next = NEXT_STATUS[order.status];
+  const label = NEXT_LABEL[status];
+
+  function advance() {
+    startTransition(async () => {
+      const result = await advanceOrderStatus(order.id, status);
+      if (result.ok) {
+        const nextMap: Record<OrderStatus, OrderStatus> = {
+          pending: "confirmed",
+          confirmed: "dispatched",
+          dispatched: "fulfilled",
+          fulfilled: "fulfilled",
+        };
+        setStatus(nextMap[status]);
+      }
+    });
+  }
 
   return (
-    <div className="p-4 flex items-center justify-between gap-3">
+    <Card className="flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-ink truncate">{order.customerName}</p>
-        <p className="text-xs text-muted mt-0.5">
-          {order.product}{order.quantity ? ` · ${order.quantity}` : ""}
-          {order.amount ? ` · ${formatCurrency(order.amount)}` : ""}
-          {showRep && order.repName ? ` · ${order.repName}` : ""}
-        </p>
-        <p className="text-xs text-muted mt-0.5">{formatDate(order.created_at)}</p>
+        <div className="font-medium text-[var(--ink)] truncate">{order.customerName}</div>
+        <div className="text-sm text-[var(--muted)]">
+          {order.product} {order.quantity ? `· ${order.quantity}` : ""} ·{" "}
+          {formatCurrency(order.amount)}
+        </div>
+        <div className="text-xs text-[var(--muted)] mt-0.5">
+          {formatDate(order.created_at)}
+        </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <StatusPill status={order.status} />
-        {next && (
+      <div className="flex flex-col items-end gap-2 shrink-0">
+        <StatusPill status={status} />
+        {label && (
           <button
+            type="button"
+            onClick={advance}
             disabled={pending}
-            onClick={() => startTransition(() => updateOrderStatus(order.id, next))}
-            className="text-xs font-medium text-teal border border-teal/30 rounded-lg px-2.5 py-1.5 disabled:opacity-40 hover:bg-teal/5 transition-colors whitespace-nowrap"
+            className="btn-secondary text-xs px-3 py-1.5 whitespace-nowrap"
           >
-            {pending ? "…" : NEXT_LABEL[order.status]}
+            {pending ? "Updating…" : label}
           </button>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

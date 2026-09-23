@@ -1,25 +1,26 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { createSession } from "@/lib/session";
-import { redirect } from "next/navigation";
 
-export async function loginWithPin(pin: string): Promise<{ error: string } | void> {
-  if (!/^\d{4,6}$/.test(pin)) {
-    return { error: "Enter your 4-6 digit PIN." };
-  }
-
+export async function loginWithPin(pin: string) {
   const { data: user, error } = await supabaseAdmin
     .from("av_users")
-    .select("id, name, role, pin")
+    .select("id, name, role, active")
     .eq("pin", pin)
     .eq("active", true)
     .maybeSingle();
 
   if (error || !user) {
-    return { error: "That PIN wasn't recognized. Try again." };
+    return { ok: false as const, message: "That PIN wasn't recognized." };
   }
 
-  await createSession({ userId: user.id, name: user.name, role: user.role });
+  await createSession({
+    userId: user.id,
+    name: user.name,
+    role: user.role === "owner" ? "owner" : "rep",
+  });
+
   redirect("/dashboard");
 }

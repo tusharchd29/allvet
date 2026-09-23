@@ -1,22 +1,32 @@
 import Link from "next/link";
-import { GROWTH_NAV, EVERYDAY_NAV } from "@/components/nav-config";
-import PageHeader from "@/components/PageHeader";
-
-const REST = [...EVERYDAY_NAV.slice(4), ...GROWTH_NAV];
+import { GROWTH_NAV } from "@/components/nav-config";
+import { Icon } from "@/components/icon";
+import { PageHeader } from "@/components/PageHeader";
+import { Card } from "@/components/Card";
 
 export default function MorePage() {
   return (
     <div>
       <PageHeader title="More" />
-      <div className="grid grid-cols-2 gap-3">
-        {REST.map((item) => (
-          <Link key={item.href} href={item.href} className="rounded-2xl bg-white border border-border/60 p-4 flex flex-col items-start gap-3">
-            <div className="h-9 w-9 rounded-full bg-offwhite flex items-center justify-center">
-              <item.icon size={17} className="text-teal" />
-            </div>
-            <p className="text-sm font-medium text-ink">{item.label}</p>
-          </Link>
-        ))}
+      <div className="space-y-2">
+        {[...GROWTH_NAV, { href: "/tours", label: "Tour Plan", icon: "calendar" }, { href: "/travel", label: "Travel Log", icon: "car" }].map(
+          (item) => (
+            <Link key={item.href} href={item.href}>
+              <Card className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Icon name={item.icon} size={18} className="text-[var(--teal)]" />
+                  <span className="text-[var(--ink)] font-medium">{item.label}</span>
+                </div>
+                <Icon name="chevron-right" size={16} className="text-[var(--muted)]" />
+              </Card>
+            </Link>
+          ),
+        )}
+        <form action="/api/logout" method="POST">
+          <button type="submit" className="btn-secondary w-full py-2.5 mt-2">
+            Log out
+          </button>
+        </form>
       </div>
     </div>
   );

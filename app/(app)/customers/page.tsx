@@ -1,62 +1,63 @@
-import { getSession } from "@/lib/session";
-import { supabaseAdmin } from "@/lib/supabase-admin";
-import { getRepScope } from "@/lib/data";
-import PageHeader from "@/components/PageHeader";
-import Card from "@/components/Card";
-import EmptyState from "@/components/EmptyState";
 import Link from "next/link";
-import { Plus, Phone } from "lucide-react";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
+import { getRepScope } from "@/lib/data";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { PageHeader } from "@/components/PageHeader";
+import { Card } from "@/components/Card";
+import { EmptyState } from "@/components/EmptyState";
+import { Icon } from "@/components/icon";
 
 export const dynamic = "force-dynamic";
 
 export default async function CustomersPage() {
-  const session = (await getSession())!;
-  const repId = await getRepScope(session);
+  const session = await getSession();
+  if (!session) redirect("/login");
 
-  let q = supabaseAdmin
+  const repId = getRepScope(session);
+  const query = supabaseAdmin
     .from("av_customers")
-    .select("id, name, phone, segment, av_users(name)")
+    .select("id, name, phone, address, segment")
     .order("name");
-  if (repId) q = q.eq("rep_id", repId);
-  const { data: customers } = await q;
+  if (repId) query.eq("rep_id", repId);
+  const { data: customers } = await query;
 
   return (
     <div>
       <PageHeader
         title="Customers"
-        subtitle={`${customers?.length || 0} in your book`}
+        subtitle={`${customers?.length ?? 0} clinics`}
         action={
-          <Link href="/customers/new" className="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-teal text-white text-sm font-medium">
-            <Plus size={16} /> Add customer
+          <Link href="/customers/new" className="btn-primary px-4 py-2 text-sm inline-flex items-center gap-1.5">
+            <Icon name="plus" size={15} /> New
           </Link>
         }
       />
 
       {!customers || customers.length === 0 ? (
-        <EmptyState title="No customers yet" hint="Add your first customer to start logging visits and orders." />
+        <Card>
+          <EmptyState
+            icon="users"
+            title="No customers yet"
+            subtitle="Add the first clinic you visit to start tracking orders and visits."
+          />
+        </Card>
       ) : (
-        <Card padded={false}>
-          <div className="divide-y divide-border/60">
-            {customers.map((c: any) => (
-              <Link key={c.id} href={`/customers/${c.id}`} className="p-4 flex items-center justify-between hover:bg-offwhite transition-colors">
+        <div className="space-y-2">
+          {customers.map((c) => (
+            <Link key={c.id} href={`/customers/${c.id}`}>
+              <Card className="flex items-center justify-between hover:border-[var(--teal)] transition-colors">
                 <div>
-                  <p className="text-sm font-medium text-ink">{c.name}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {c.segment && <span className="text-xs text-teal bg-offwhite rounded-full px-2 py-0.5">{c.segment}</span>}
-                    {session.role === "owner" && c.av_users?.name && (
-                      <span className="text-xs text-muted">{c.av_users.name}</span>
-                    )}
+                  <div className="font-medium text-[var(--ink)]">{c.name}</div>
+                  <div className="text-sm text-[var(--muted)]">
+                    {c.segment ?? "General"} {c.phone ? `· ${c.phone}` : ""}
                   </div>
                 </div>
-                {c.phone && (
-                  <span className="flex items-center gap-1 text-xs text-muted shrink-0">
-                    <Phone size={13} /> {c.phone}
-                  </span>
-                )}
-              </Link>
-            ))}
-          </div>
-        </Card>
+                <Icon name="chevron-right" size={18} className="text-[var(--muted)]" />
+              </Card>
+            </Link>
+          ))}
+        </div>
       )}
     </div>
   );

@@ -1,24 +1,30 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getSession } from "@/lib/session";
-import { revalidatePath } from "next/cache";
 
 export async function setTarget(formData: FormData) {
-  const session = (await getSession())!;
-  if (session.role !== "owner") return;
+  const session = await getSession();
+  if (!session || session.role !== "owner") redirect("/dashboard");
 
-  const repId = String(formData.get("rep_id") || "");
-  const amount = Number(formData.get("target_amount") || 0);
-  const periodMonth = new Date();
-  periodMonth.setDate(1);
-  const period = periodMonth.toISOString().slice(0, 10);
+  const rep_id = String(formData.get("rep_id") || "");
+  const target_amount = Number(formData.get("target_amount") || 0);
+  const period_month = String(formData.get("period_month") || "");
 
-  if (!repId || !amount) return;
+  if (!rep_id || !period_month || target_amount <= 0) {
+    throw new Error("All fields are required");
+  }
 
-  await supabaseAdmin
+  const { error } = await supabaseAdmin
     .from("av_targets")
-    .upsert({ rep_id: repId, period_month: period, target_amount: amount }, { onConflict: "rep_id,period_month" });
+    .upsert(
+      { rep_id, period_month: `${period_month}-01`, target_amount },
+      { onConflict: "rep_id,period_month" },
+    );
+
+  if (error) throw new Error(error.message);
 
   revalidatePath("/targets");
   revalidatePath("/dashboard");
