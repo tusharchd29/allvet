@@ -75,7 +75,13 @@ create table if not exists av_products (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   category text,
+  -- Pack size as a number + unit pair (e.g. pack_size=50, default_unit="kg"
+  -- -> "50 kg") rather than one free-text field, so it can be filtered/
+  -- summed later. default_unit is suggested from a common-units list in
+  -- the UI (lib/utils.ts PACK_UNITS) but not DB-constrained, since older
+  -- rows may already hold values outside that list.
   default_unit text,
+  pack_size numeric,
   default_price numeric,
   active boolean not null default true,
   created_at timestamptz not null default now()

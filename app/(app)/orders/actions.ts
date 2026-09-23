@@ -6,6 +6,37 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { getSession } from "@/lib/session";
 import type { OrderStatus } from "@/lib/utils";
 
+/**
+ * Looks up each typed product name against the catalog (case-insensitive)
+ * and auto-adds any that aren't found, so the catalog stays a live record
+ * of everything actually ordered — reps can keep typing new names on an
+ * order rather than being blocked on someone adding it to Products first.
+ * New rows are inserted `active: false` ("needs review") so they don't
+ * silently start appearing as order-picker presets with no category/price
+ * set; the owner reviews and activates them from the Products page.
+ * Returns a name -> product_id map covering both existing and newly-added
+ * products.
+ */
+async function resolveOrAddCatalogProducts(names: string[]): Promise<Map<string, string>> {
+  const { data: catalog } = await supabaseAdmin.from("av_products").select("id, name");
+  const byName = new Map((catalog ?? []).map((p) => [p.name.toLowerCase(), p.id as string]));
+
+  const uniqueNames = Array.from(new Set(names.map((n) => n.trim()).filter(Boolean)));
+  const missing = uniqueNames.filter((n) => !byName.has(n.toLowerCase()));
+
+  if (missing.length > 0) {
+    const { data: inserted } = await supabaseAdmin
+      .from("av_products")
+      .insert(missing.map((name) => ({ name, active: false })))
+      .select("id, name");
+    for (const p of inserted ?? []) {
+      byName.set((p.name as string).toLowerCase(), p.id as string);
+    }
+  }
+
+  return byName;
+}
+
 export async function createOrder(formData: FormData) {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -36,10 +67,9 @@ export async function createOrder(formData: FormData) {
 
   // Link each line back to the catalog by exact (case-insensitive) name
   // match, so a picked preset stays connected to its av_products row. A
-  // freely typed name that isn't in the catalog still works fine — it's
-  // just not linked.
-  const { data: catalog } = await supabaseAdmin.from("av_products").select("id, name");
-  const catalogByName = new Map((catalog ?? []).map((p) => [p.name.toLowerCase(), p.id as string]));
+  // freely typed name that isn't in the catalog yet gets auto-added
+  // (inactive, pending the owner's review) rather than left unlinked.
+  const catalogByName = await resolveOrAddCatalogProducts(items.map((it) => it.name));
 
   const lineItems = items.map((it) => {
     const line_amount = it.unitPrice != null ? Math.round(it.quantity * it.unitPrice * 100) / 100 : null;
@@ -91,6 +121,7 @@ export async function createOrder(formData: FormData) {
   }
 
   revalidatePath("/orders");
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -129,8 +160,7 @@ export async function updateOrderItems(orderId: string, formData: FormData) {
     return { ok: false, message: "Every product needs a quantity greater than zero" };
   }
 
-  const { data: catalog } = await supabaseAdmin.from("av_products").select("id, name");
-  const catalogByName = new Map((catalog ?? []).map((p) => [p.name.toLowerCase(), p.id as string]));
+  const catalogByName = await resolveOrAddCatalogProducts(items.map((it) => it.name));
 
   const lineItems = items.map((it) => {
     const line_amount = it.unitPrice != null ? Math.round(it.quantity * it.unitPrice * 100) / 100 : null;
@@ -167,6 +197,7 @@ export async function updateOrderItems(orderId: string, formData: FormData) {
   revalidatePath("/orders");
   revalidatePath("/payments");
   revalidatePath("/dashboard");
+  revalidatePath("/products");
   return { ok: true };
 }
 

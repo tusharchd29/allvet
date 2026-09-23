@@ -3,7 +3,6 @@ import { getSession } from "@/lib/session";
 import { getRepScope } from "@/lib/data";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
-import { Card } from "@/components/Card";
 import { StatusPill } from "@/components/StatusPill";
 import { EditableCard } from "../../_shared/EditableCard";
 import { CustomerEditForm } from "../CustomerEditForm";

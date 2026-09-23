@@ -33,6 +33,7 @@ type Order = {
   dispatched_at?: string | null;
   fulfilled_at?: string | null;
   customerName: string;
+  repName?: string | null;
   notes?: string | null;
   payment_due_date?: string | null;
 };
@@ -43,10 +44,12 @@ export function OrderRow({
   order,
   items = [],
   products = [],
+  showRep = false,
 }: {
   order: Order;
   items?: LineItem[];
   products?: CatalogProduct[];
+  showRep?: boolean;
 }) {
   const hasItems = items.length > 0;
   const [status, setStatus] = useState(order.status);
@@ -211,6 +214,7 @@ export function OrderRow({
         </div>
         <div className="text-xs text-[var(--muted)] mt-0.5">
           {formatDate(order.created_at)} · {ageingLabel(order)}
+          {showRep && order.repName && <> · {order.repName}</>}
         </div>
       </div>
       <div className="flex flex-col items-end gap-2 shrink-0">

@@ -8,6 +8,7 @@ import { formatCurrency } from "@/lib/utils";
 import { setTarget } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
 import { ActionForm } from "@/components/ActionForm";
+import { getEffectiveTargets } from "@/lib/targets";
 
 export const dynamic = "force-dynamic";
 
@@ -24,12 +25,26 @@ export default async function TargetsPage() {
 
   const repId = session.role === "owner" ? null : session.userId;
 
-  const targetsQuery = supabaseAdmin
-    .from("av_targets")
-    .select("id, rep_id, period_month, target_amount, av_users(name)")
-    .eq("period_month", monthStartDate);
-  if (repId) targetsQuery.eq("rep_id", repId);
-  const { data: targets } = await targetsQuery;
+  let reps: Array<{ id: string; name: string }> = [];
+  if (session.role === "owner") {
+    const { data } = await supabaseAdmin
+      .from("av_users")
+      .select("id, name")
+      .eq("role", "rep")
+      .order("name");
+    reps = data ?? [];
+  } else {
+    reps = [{ id: session.userId, name: session.name }];
+  }
+
+  // A target carries forward month to month until the owner sets a new one
+  // — see lib/targets.ts. "This month" here is always the current calendar
+  // month, not whatever range the global date filter might have set
+  // elsewhere, since a target is inherently a monthly figure.
+  const effectiveTargets = await getEffectiveTargets(
+    repId ? [repId] : reps.map((r) => r.id),
+    monthStartDate,
+  );
 
   const ordersQuery = supabaseAdmin
     .from("av_orders")
@@ -44,15 +59,7 @@ export default async function TargetsPage() {
     fulfilledByRep.set(o.rep_id, (fulfilledByRep.get(o.rep_id) ?? 0) + (o.amount ?? 0));
   }
 
-  let reps: Array<{ id: string; name: string }> = [];
-  if (session.role === "owner") {
-    const { data } = await supabaseAdmin
-      .from("av_users")
-      .select("id, name")
-      .eq("role", "rep")
-      .order("name");
-    reps = data ?? [];
-  }
+  const repsWithTargets = reps.filter((r) => effectiveTargets.has(r.id));
 
   return (
     <div>
@@ -62,25 +69,31 @@ export default async function TargetsPage() {
       />
 
       <div className="space-y-3 mb-6">
-        {(targets ?? []).map((t) => {
-          const fulfilled = fulfilledByRep.get(t.rep_id) ?? 0;
-          const pct = Math.min(100, Math.round((fulfilled / t.target_amount) * 100));
+        {repsWithTargets.map((r) => {
+          const target = effectiveTargets.get(r.id)!;
+          const fulfilled = fulfilledByRep.get(r.id) ?? 0;
+          const pct = Math.min(100, Math.round((fulfilled / target.amount) * 100));
+          const carriedOver = target.setFor !== monthStartDate;
           return (
-            <Card key={t.id}>
+            <Card key={r.id}>
               <div className="flex items-center justify-between text-sm mb-2">
-                {/* @ts-expect-error joined relation */}
-                <span className="font-medium text-[var(--ink)]">{t.av_users?.name}</span>
+                <span className="font-medium text-[var(--ink)]">{r.name}</span>
                 <span className="text-[var(--muted)]">
-                  {formatCurrency(fulfilled)} / {formatCurrency(t.target_amount)}
+                  {formatCurrency(fulfilled)} / {formatCurrency(target.amount)}
                 </span>
               </div>
               <ProgressBar pct={pct} />
+              {carriedOver && (
+                <div className="text-xs text-[var(--muted)] mt-1.5">
+                  Carried over — last set {target.setFor.slice(0, 7)}
+                </div>
+              )}
             </Card>
           );
         })}
-        {(!targets || targets.length === 0) && (
+        {repsWithTargets.length === 0 && (
           <div className="text-sm text-[var(--muted)]">
-            No target set for this month yet.
+            No target has ever been set{session.role === "owner" ? "" : " for you"} yet.
           </div>
         )}
       </div>

@@ -61,6 +61,21 @@ export const ZONE_LABEL: Record<Zone, string> = {
   south: "South",
 };
 
+// Suggested units for a product's pack size (av_products.default_unit) —
+// offered via a datalist, not enforced, so older free-text values still
+// display fine.
+export const PACK_UNITS = ["kg", "g", "lt", "ml", "bag", "box", "pcs", "carton", "bottle"] as const;
+
+/** "50 kg" from pack_size=50, default_unit="kg" — either half may be
+ * missing (an old product, or one added with just a name). */
+export function formatPackSize(
+  pack_size: number | null | undefined,
+  unit: string | null | undefined,
+): string | null {
+  if (pack_size == null && !unit) return null;
+  return [pack_size, unit].filter((v) => v != null && v !== "").join(" ");
+}
+
 export function isOverdue(dueDate: string | null | undefined): boolean {
   if (!dueDate) return false;
   return new Date(dueDate).getTime() < new Date().setHours(0, 0, 0, 0);

@@ -12,6 +12,8 @@ export async function createProduct(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   const category = String(formData.get("category") || "").trim() || null;
   const default_unit = String(formData.get("default_unit") || "").trim() || null;
+  const packRaw = String(formData.get("pack_size") || "").trim();
+  const pack_size = packRaw ? Number(packRaw) : null;
   const priceRaw = String(formData.get("default_price") || "").trim();
   const default_price = priceRaw ? Number(priceRaw) : null;
 
@@ -21,6 +23,7 @@ export async function createProduct(formData: FormData) {
     name,
     category,
     default_unit,
+    pack_size,
     default_price,
   });
 

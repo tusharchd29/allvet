@@ -2,6 +2,11 @@ import { supabaseAdmin } from "./supabase-admin";
 import type { Session } from "./session";
 import type { DateRange } from "./date-range";
 import { dayStart, dayEnd } from "./date-range";
+import { getEffectiveTargets } from "./targets";
+
+function currentMonthStart() {
+  return `${new Date().toISOString().slice(0, 7)}-01`;
+}
 
 export function getRepScope(session: Session) {
   return session.role === "owner" ? null : session.userId;
@@ -24,16 +29,19 @@ export async function getDashboardStats(session: Session, range?: DateRange) {
   if (range?.from) ordersQuery.gte("created_at", dayStart(range.from));
   if (range?.to) ordersQuery.lte("created_at", dayEnd(range.to));
 
-  const targetsQuery = supabaseAdmin.from("av_targets").select("*");
-  if (repId) targetsQuery.eq("rep_id", repId);
-
   const customersQuery = supabaseAdmin
     .from("av_customers")
     .select("*", { count: "exact", head: true });
   if (repId) customersQuery.eq("rep_id", repId);
 
-  const [{ count: visitsCount }, { data: orders }, { data: targets }, { count: customersCount }] =
-    await Promise.all([visitsQuery, ordersQuery, targetsQuery, customersQuery]);
+  const repUsersQuery =
+    session.role === "owner"
+      ? supabaseAdmin.from("av_users").select("id, name, role").eq("role", "rep")
+      : null;
+
+  const [{ count: visitsCount }, { data: orders }, { count: customersCount }, repUsersResult] =
+    await Promise.all([visitsQuery, ordersQuery, customersQuery, repUsersQuery]);
+  const users = repUsersResult?.data ?? [];
 
   const fulfilledOrders = (orders ?? []).filter((o) => o.status === "fulfilled");
   const fulfilledTotal = fulfilledOrders.reduce(
@@ -44,8 +52,15 @@ export async function getDashboardStats(session: Session, range?: DateRange) {
     (o) => o.status !== "fulfilled",
   ).length;
 
-  const targetTotal = (targets ?? []).reduce(
-    (sum, t) => sum + (t.target_amount ?? 0),
+  // Targets are a monthly figure and carry forward until changed (see
+  // lib/targets.ts) — "this month" for the dashboard is always the current
+  // calendar month, independent of whatever date range the person has
+  // filtered the rest of the dashboard to.
+  const thisMonth = currentMonthStart();
+  const targetRepIds = repId ? [repId] : users.map((u) => u.id);
+  const effectiveTargets = await getEffectiveTargets(targetRepIds, thisMonth);
+  const targetTotal = Array.from(effectiveTargets.values()).reduce(
+    (sum, t) => sum + t.amount,
     0,
   );
   const achievementPct =
@@ -61,19 +76,12 @@ export async function getDashboardStats(session: Session, range?: DateRange) {
   }> = [];
 
   if (session.role === "owner") {
-    const { data: users } = await supabaseAdmin
-      .from("av_users")
-      .select("id, name, role")
-      .eq("role", "rep");
-
-    repBreakdown = (users ?? []).map((u) => {
+    repBreakdown = users.map((u) => {
       const userOrders = (orders ?? []).filter(
         (o) => o.rep_id === u.id && o.status === "fulfilled",
       );
       const fulfilled = userOrders.reduce((sum, o) => sum + (o.amount ?? 0), 0);
-      const target = (targets ?? [])
-        .filter((t) => t.rep_id === u.id)
-        .reduce((sum, t) => sum + (t.target_amount ?? 0), 0);
+      const target = effectiveTargets.get(u.id)?.amount ?? 0;
       return { repId: u.id, name: u.name, fulfilled, target };
     });
   }

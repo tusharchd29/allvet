@@ -24,7 +24,7 @@ export default async function NewOrderPage() {
     customersQuery,
     supabaseAdmin
       .from("av_products")
-      .select("id, name, category, default_unit, default_price")
+      .select("id, name, category, default_unit, pack_size, default_price")
       .eq("active", true)
       .order("name"),
   ]);

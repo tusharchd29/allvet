@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { EditableCard } from "../_shared/EditableCard";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatPackSize, PACK_UNITS } from "@/lib/utils";
 import { createProduct } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
 import { ActionForm } from "@/components/ActionForm";
@@ -18,7 +18,7 @@ export default async function ProductsPage() {
 
   const { data: products } = await supabaseAdmin
     .from("av_products")
-    .select("id, name, category, default_unit, default_price, active")
+    .select("id, name, category, default_unit, pack_size, default_price, active")
     .order("category", { ascending: true, nullsFirst: false })
     .order("name", { ascending: true });
 
@@ -57,16 +57,40 @@ export default async function ProductsPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">
-                Default unit
+                Unit
               </label>
-              <input name="default_unit" className="input-field" placeholder="e.g. box" />
+              <input
+                name="default_unit"
+                className="input-field"
+                placeholder="e.g. kg"
+                list="pack-units"
+              />
+              <datalist id="pack-units">
+                {PACK_UNITS.map((u) => (
+                  <option key={u} value={u} />
+                ))}
+              </datalist>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-[var(--ink)] mb-1">
-              Default price (₹)
-            </label>
-            <input name="default_price" type="number" step="0.01" className="input-field" placeholder="Optional" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+                Pack size
+              </label>
+              <input
+                name="pack_size"
+                type="number"
+                step="0.01"
+                className="input-field"
+                placeholder="e.g. 50"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+                Default price (₹)
+              </label>
+              <input name="default_price" type="number" step="0.01" className="input-field" placeholder="Optional" />
+            </div>
           </div>
           <SubmitButton>Add product</SubmitButton>
         </ActionForm>
@@ -88,13 +112,15 @@ export default async function ProductsPage() {
                 name: p.name,
                 category: p.category,
                 default_unit: p.default_unit,
+                pack_size: p.pack_size,
                 default_price: p.default_price,
                 active: p.active,
               }}
               fields={[
                 { name: "name", label: "Name", type: "text" },
                 { name: "category", label: "Category", type: "text" },
-                { name: "default_unit", label: "Default unit", type: "text" },
+                { name: "default_unit", label: "Unit", type: "text" },
+                { name: "pack_size", label: "Pack size", type: "number" },
                 { name: "default_price", label: "Default price (₹)", type: "number" },
                 { name: "active", label: "Active (shows in the order picker)", type: "checkbox" },
               ]}
@@ -105,7 +131,11 @@ export default async function ProductsPage() {
                   {p.name}
                 </div>
                 <div className="text-sm text-[var(--muted)]">
-                  {[p.category, p.default_unit, p.default_price ? formatCurrency(p.default_price) : null]
+                  {[
+                    p.category,
+                    formatPackSize(p.pack_size, p.default_unit),
+                    p.default_price ? formatCurrency(p.default_price) : null,
+                  ]
                     .filter(Boolean)
                     .join(" · ") || "No details yet"}
                 </div>

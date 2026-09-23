@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function PaymentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>;
+  searchParams: Promise<{ filter?: "overdue" | "all" }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -68,7 +68,9 @@ export default async function PaymentsPage({
   const totalOverdue = overdue.reduce((s, o) => s + o.due, 0);
 
   const showOverdueOnly = filter === "overdue";
-  const list = (showOverdueOnly ? overdue : outstanding).sort((a, b) => {
+  const showAll = filter === "all";
+  const base = showAll ? dueOrders : showOverdueOnly ? overdue : outstanding;
+  const list = base.sort((a, b) => {
     if (!a.payment_due_date) return 1;
     if (!b.payment_due_date) return -1;
     return a.payment_due_date.localeCompare(b.payment_due_date);
@@ -93,16 +95,16 @@ export default async function PaymentsPage({
         </Card>
       </div>
 
-      <div className="flex gap-2 mb-4">
+      <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
         <a
           href="/payments"
           className={`text-xs px-3 py-1.5 rounded-full border whitespace-nowrap ${
-            !showOverdueOnly
+            !showOverdueOnly && !showAll
               ? "bg-[var(--teal)] text-white border-[var(--teal)]"
               : "border-[var(--border)] text-[var(--muted)]"
           }`}
         >
-          All dues ({outstanding.length})
+          Outstanding ({outstanding.length})
         </a>
         <a
           href="/payments?filter=overdue"
@@ -114,14 +116,24 @@ export default async function PaymentsPage({
         >
           Overdue ({overdue.length})
         </a>
+        <a
+          href="/payments?filter=all"
+          className={`text-xs px-3 py-1.5 rounded-full border whitespace-nowrap ${
+            showAll
+              ? "bg-[var(--teal)] text-white border-[var(--teal)]"
+              : "border-[var(--border)] text-[var(--muted)]"
+          }`}
+        >
+          All ({dueOrders.length})
+        </a>
       </div>
 
       {list.length === 0 ? (
         <Card>
           <EmptyState
             icon="indian-rupee"
-            title={showOverdueOnly ? "No overdue payments" : "All caught up"}
-            subtitle="Payment dues appear here for fulfilled orders that still have an outstanding balance."
+            title={showOverdueOnly ? "No overdue payments" : showAll ? "No fulfilled orders yet" : "All caught up"}
+            subtitle={'Payment dues appear here for fulfilled orders — including paid ones under the "All" tab.'}
           />
         </Card>
       ) : (

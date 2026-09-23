@@ -129,8 +129,18 @@ export function ReportDocument({ data }: { data: ReportData }) {
           <SummaryBox label="Overdue" value={formatCurrency(data.totals.overdue)} />
           <SummaryBox label="Expenses" value={formatCurrency(data.totals.expenses)} />
           <SummaryBox label="Advances outstanding" value={formatCurrency(data.totals.advancesOutstanding)} />
+          {data.sections.includes("travel") && (
+            <SummaryBox label="Travel reimbursement" value={formatCurrency(data.totals.travelReimbursement)} />
+          )}
+          {data.sections.includes("advances") && (
+            <SummaryBox label="Rep advances given" value={formatCurrency(data.totals.repAdvancesGiven)} />
+          )}
+          {data.sections.includes("advances") && (
+            <SummaryBox label="Claims pending" value={formatCurrency(data.totals.claimsPending)} />
+          )}
         </View>
 
+        {data.sections.includes("visits") && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Visits ({data.visits.length})</Text>
           {data.visits.length === 0 ? (
@@ -158,7 +168,9 @@ export function ReportDocument({ data }: { data: ReportData }) {
             </View>
           )}
         </View>
+        )}
 
+        {data.sections.includes("orders") && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Orders ({data.orders.length})</Text>
           {data.orders.length === 0 ? (
@@ -195,7 +207,9 @@ export function ReportDocument({ data }: { data: ReportData }) {
             </View>
           )}
         </View>
+        )}
 
+        {data.sections.includes("orders") && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payments received ({data.payments.length})</Text>
           {data.payments.length === 0 ? (
@@ -221,7 +235,9 @@ export function ReportDocument({ data }: { data: ReportData }) {
             </View>
           )}
         </View>
+        )}
 
+        {data.sections.includes("expenses") && (
         <View style={styles.section} wrap={false}>
           <Text style={styles.sectionTitle}>Expenses ({data.expenses.length})</Text>
           {data.expenses.length === 0 ? (
@@ -247,9 +263,39 @@ export function ReportDocument({ data }: { data: ReportData }) {
             </View>
           )}
         </View>
+        )}
 
+        {data.sections.includes("travel") && (
         <View style={styles.section} wrap={false}>
-          <Text style={styles.sectionTitle}>Advances ({data.advances.length})</Text>
+          <Text style={styles.sectionTitle}>Travel & reimbursement ({data.travelLogs.length})</Text>
+          {data.travelLogs.length === 0 ? (
+            <Text style={styles.empty}>No travel logged in this period.</Text>
+          ) : (
+            <View style={styles.table}>
+              <View style={styles.tr}>
+                <Th width="16%">Date</Th>
+                {showRep && <Th width="20%">Rep</Th>}
+                <Th width="16%">Distance</Th>
+                <Th width="16%">Rate/km</Th>
+                <Th width={showRep ? "32%" : "52%"}>Reimbursement</Th>
+              </View>
+              {data.travelLogs.map((t) => (
+                <View key={t.id} style={styles.tr}>
+                  <Td width="16%">{formatDate(t.travelDate)}</Td>
+                  {showRep && <Td width="20%">{t.repName}</Td>}
+                  <Td width="16%">{t.distanceKm} km</Td>
+                  <Td width="16%">{t.ratePerKm != null ? formatCurrency(t.ratePerKm) : "—"}</Td>
+                  <Td width={showRep ? "32%" : "52%"}>{formatCurrency(t.reimbursement)}</Td>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+        )}
+
+        {data.sections.includes("advances") && (
+        <View style={styles.section} wrap={false}>
+          <Text style={styles.sectionTitle}>Customer advances ({data.advances.length})</Text>
           {data.advances.length === 0 ? (
             <Text style={styles.empty}>No advances logged in this period.</Text>
           ) : (
@@ -275,6 +321,130 @@ export function ReportDocument({ data }: { data: ReportData }) {
             </View>
           )}
         </View>
+        )}
+
+        {data.sections.includes("advances") && (
+        <View style={styles.section} wrap={false}>
+          <Text style={styles.sectionTitle}>Rep advances given ({data.repAdvances.length})</Text>
+          {data.repAdvances.length === 0 ? (
+            <Text style={styles.empty}>No cash advances given to reps in this period.</Text>
+          ) : (
+            <View style={styles.table}>
+              <View style={styles.tr}>
+                <Th width="16%">Date</Th>
+                {showRep && <Th width="20%">Rep</Th>}
+                <Th width="16%">Amount</Th>
+                <Th width={showRep ? "48%" : "68%"}>Purpose</Th>
+              </View>
+              {data.repAdvances.map((a) => (
+                <View key={a.id} style={styles.tr}>
+                  <Td width="16%">{formatDate(a.givenAt)}</Td>
+                  {showRep && <Td width="20%">{a.repName}</Td>}
+                  <Td width="16%">{formatCurrency(a.amount)}</Td>
+                  <Td width={showRep ? "48%" : "68%"}>{a.purpose ?? "—"}</Td>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+        )}
+
+        {data.sections.includes("advances") && (
+        <View style={styles.section} wrap={false}>
+          <Text style={styles.sectionTitle}>Claims ({data.claims.length})</Text>
+          {data.claims.length === 0 ? (
+            <Text style={styles.empty}>No claims submitted in this period.</Text>
+          ) : (
+            <View style={styles.table}>
+              <View style={styles.tr}>
+                <Th width="16%">Date</Th>
+                {showRep && <Th width="20%">Rep</Th>}
+                <Th width="16%">Amount</Th>
+                <Th width="16%">Status</Th>
+                <Th width={showRep ? "32%" : "52%"}>Notes</Th>
+              </View>
+              {data.claims.map((c) => (
+                <View key={c.id} style={styles.tr}>
+                  <Td width="16%">{formatDate(c.createdAt)}</Td>
+                  {showRep && <Td width="20%">{c.repName}</Td>}
+                  <Td width="16%">{formatCurrency(c.amount)}</Td>
+                  <Td
+                    width="16%"
+                    color={c.status === "paid" ? "#037a4e" : c.status === "approved" ? "#1c5d8a" : "#8a6100"}
+                  >
+                    {c.status[0].toUpperCase() + c.status.slice(1)}
+                  </Td>
+                  <Td width={showRep ? "32%" : "52%"}>{c.notes ?? "—"}</Td>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+        )}
+
+        {data.sections.includes("targets") && (
+        <View style={styles.section} wrap={false}>
+          <Text style={styles.sectionTitle}>Targets vs achievement ({data.targets.length})</Text>
+          {data.targets.length === 0 ? (
+            <Text style={styles.empty}>No targets set for this period.</Text>
+          ) : (
+            <View style={styles.table}>
+              <View style={styles.tr}>
+                <Th width="30%">Rep</Th>
+                <Th width="23%">Target</Th>
+                <Th width="23%">Achieved</Th>
+                <Th width="24%">% of target</Th>
+              </View>
+              {data.targets.map((t) => (
+                <View key={t.repId} style={styles.tr}>
+                  <Td width="30%">{t.repName}</Td>
+                  <Td width="23%">{formatCurrency(t.target)}</Td>
+                  <Td width="23%">{formatCurrency(t.achieved)}</Td>
+                  <Td width="24%" color={t.pct >= 100 ? "#037a4e" : undefined}>
+                    {t.pct}%
+                  </Td>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+        )}
+
+        {data.sections.includes("tours") && (
+        <View style={styles.section} wrap={false}>
+          <Text style={styles.sectionTitle}>Tour coverage ({data.tours.length})</Text>
+          {data.tours.length === 0 ? (
+            <Text style={styles.empty}>No tour plans in this period.</Text>
+          ) : (
+            <View style={styles.table}>
+              <View style={styles.tr}>
+                <Th width="16%">Week of</Th>
+                {showRep && <Th width="18%">Rep</Th>}
+                <Th width="14%">Zone</Th>
+                <Th width={showRep ? "24%" : "42%"}>Stops completed</Th>
+                <Th width="28%">Coverage</Th>
+              </View>
+              {data.tours.map((t) => {
+                const completedCount = t.stops.filter((s) => s.completed).length;
+                const pct = t.stops.length > 0 ? Math.round((completedCount / t.stops.length) * 100) : 0;
+                return (
+                  <View key={t.id} style={styles.tr}>
+                    <Td width="16%">{formatDate(t.weekStart)}</Td>
+                    {showRep && <Td width="18%">{t.repName}</Td>}
+                    <Td width="14%">{t.zone ?? "—"}</Td>
+                    <Td width={showRep ? "24%" : "42%"}>
+                      {completedCount} / {t.stops.length}
+                    </Td>
+                    <Td width="28%" color={pct === 100 ? "#037a4e" : undefined}>
+                      {pct}%
+                    </Td>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </View>
+        )}
 
         <Text
           style={styles.footer}

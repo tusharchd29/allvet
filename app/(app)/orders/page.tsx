@@ -27,7 +27,7 @@ export default async function OrdersPage({
   const query = supabaseAdmin
     .from("av_orders")
     .select(
-      "id, product, quantity, amount, status, created_at, confirmed_at, dispatched_at, fulfilled_at, notes, payment_due_date, av_customers(name)",
+      "id, product, quantity, amount, status, created_at, confirmed_at, dispatched_at, fulfilled_at, notes, payment_due_date, av_customers(name), av_users!av_orders_rep_id_fkey(name)",
     )
     .order("created_at", { ascending: false })
     .limit(80);
@@ -39,7 +39,7 @@ export default async function OrdersPage({
     query,
     supabaseAdmin
       .from("av_products")
-      .select("id, name, category, default_unit, default_price")
+      .select("id, name, category, default_unit, pack_size, default_price")
       .eq("active", true)
       .order("name"),
   ]);
@@ -99,9 +99,12 @@ export default async function OrdersPage({
                 payment_due_date: o.payment_due_date,
                 // @ts-expect-error joined relation
                 customerName: o.av_customers?.name ?? "Customer",
+                // @ts-expect-error joined relation
+                repName: o.av_users?.name ?? null,
               }}
               items={itemsByOrder.get(o.id) ?? []}
               products={catalogProducts ?? []}
+              showRep={!repId}
             />
           ))}
         </div>

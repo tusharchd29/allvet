@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { Icon } from "@/components/icon";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatPackSize } from "@/lib/utils";
 
 export type CatalogProduct = {
   id: string;
   name: string;
   category: string | null;
   default_unit: string | null;
+  pack_size: number | null;
   default_price: number | null;
 };
 
@@ -69,49 +70,58 @@ export function OrderItemsField({
     <div>
       <label className="block text-sm font-medium text-[var(--ink)] mb-1">Products</label>
       <div className="space-y-2">
-        {rows.map((r) => (
-          <div key={r.key} className="grid grid-cols-[1fr_64px_88px_28px] gap-2 items-center">
-            <input
-              name="item_product"
-              required
-              className="input-field text-sm"
-              placeholder="Product name"
-              list="catalog-products"
-              value={r.product}
-              onChange={(e) => onProductChange(r.key, e.target.value)}
-            />
-            <input
-              name="item_quantity"
-              type="number"
-              step="0.01"
-              min="0.01"
-              required
-              className="input-field text-sm"
-              placeholder="Qty"
-              value={r.quantity}
-              onChange={(e) => updateRow(r.key, { quantity: e.target.value })}
-            />
-            <input
-              name="item_unit_price"
-              type="number"
-              step="0.01"
-              min="0"
-              className="input-field text-sm"
-              placeholder="Price"
-              value={r.unitPrice}
-              onChange={(e) => updateRow(r.key, { unitPrice: e.target.value })}
-            />
-            <button
-              type="button"
-              onClick={() => setRows((rs) => (rs.length === 1 ? rs : rs.filter((row) => row.key !== r.key)))}
-              disabled={rows.length === 1}
-              className="text-[var(--muted)] hover:text-red-600 disabled:opacity-30 p-1.5"
-              aria-label="Remove product"
-            >
-              <Icon name="x" size={15} />
-            </button>
-          </div>
-        ))}
+        {rows.map((r) => {
+          const matched = products.find((p) => p.name.toLowerCase() === r.product.trim().toLowerCase());
+          const packHint = matched ? formatPackSize(matched.pack_size, matched.default_unit) : null;
+          return (
+            <div key={r.key}>
+              <div className="grid grid-cols-[1fr_64px_88px_28px] gap-2 items-center">
+                <input
+                  name="item_product"
+                  required
+                  className="input-field text-sm"
+                  placeholder="Product name"
+                  list="catalog-products"
+                  value={r.product}
+                  onChange={(e) => onProductChange(r.key, e.target.value)}
+                />
+                <input
+                  name="item_quantity"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  className="input-field text-sm"
+                  placeholder="Qty"
+                  value={r.quantity}
+                  onChange={(e) => updateRow(r.key, { quantity: e.target.value })}
+                />
+                <input
+                  name="item_unit_price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="input-field text-sm"
+                  placeholder="Price"
+                  value={r.unitPrice}
+                  onChange={(e) => updateRow(r.key, { unitPrice: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setRows((rs) => (rs.length === 1 ? rs : rs.filter((row) => row.key !== r.key)))}
+                  disabled={rows.length === 1}
+                  className="text-[var(--muted)] hover:text-red-600 disabled:opacity-30 p-1.5"
+                  aria-label="Remove product"
+                >
+                  <Icon name="x" size={15} />
+                </button>
+              </div>
+              {packHint && (
+                <div className="text-xs text-[var(--muted)] mt-0.5 pl-0.5">Pack size: {packHint}</div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <datalist id="catalog-products">

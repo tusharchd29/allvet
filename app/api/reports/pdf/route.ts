@@ -2,7 +2,7 @@ import { createElement, type ReactElement } from "react";
 import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer";
 import { getSession } from "@/lib/session";
-import { getReportData } from "@/lib/reports";
+import { getReportData, REPORT_SECTIONS, type ReportSection } from "@/lib/reports";
 import { ReportDocument } from "@/lib/report-pdf";
 
 // @react-pdf/renderer needs Node APIs (Buffer, fs for font handling) that
@@ -37,7 +37,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Date range can't be longer than a year." }, { status: 400 });
   }
 
-  const data = await getReportData(session, start, end);
+  // Owner only: which reps' data to include (repeated ?rep=<id> params;
+  // none picked means "whole team"), and which of the seven report
+  // sections to render (repeated ?section=<name>; none picked means all).
+  const repIds = searchParams.getAll("rep").filter(Boolean);
+  const requestedSections = searchParams.getAll("section").filter(Boolean) as ReportSection[];
+  const sections = requestedSections.filter((s) => (REPORT_SECTIONS as readonly string[]).includes(s));
+
+  const data = await getReportData(session, start, end, {
+    repIds: repIds.length > 0 ? repIds : null,
+    sections: sections.length > 0 ? sections : undefined,
+  });
   // ReportDocument is a component that renders a single <Document> — this
   // satisfies renderToBuffer's runtime contract, but its type only accepts
   // a ReactElement<DocumentProps> directly, not a wrapper component, hence
