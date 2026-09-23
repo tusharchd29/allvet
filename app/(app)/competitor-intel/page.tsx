@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { EditableCard } from "../_shared/EditableCard";
 import { formatDate } from "@/lib/utils";
 import { createCompetitorIntel } from "./actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -60,9 +61,7 @@ export default async function CompetitorIntelPage() {
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">Notes</label>
             <textarea name="notes" rows={2} className="input-field" placeholder="What they're offering" />
           </div>
-          <button type="submit" className="btn-primary w-full py-2.5">
-            Save
-          </button>
+          <SubmitButton>Save</SubmitButton>
         </form>
       </Card>
 

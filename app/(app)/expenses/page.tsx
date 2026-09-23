@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { EditableCard } from "../_shared/EditableCard";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { createExpense } from "./actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -58,9 +59,7 @@ export default async function ExpensesPage() {
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">Note</label>
             <input name="note" className="input-field" placeholder="Optional" />
           </div>
-          <button type="submit" className="btn-primary w-full py-2.5">
-            Add expense
-          </button>
+          <SubmitButton>Add expense</SubmitButton>
         </form>
       </Card>
 

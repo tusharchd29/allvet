@@ -7,6 +7,7 @@ import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { TravelRow } from "./TravelRow";
 import { createTravelLog } from "./actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export default async function TravelPage() {
       <PageHeader title="Travel Log" subtitle="Daily odometer readings" />
 
       <Card className="mb-6">
-        <div className="font-medium text-[var(--ink)] mb-3">Log today's travel</div>
+        <div className="font-medium text-[var(--ink)] mb-3">Log today&apos;s travel</div>
         <form action={createTravelLog} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">Date</label>
@@ -53,9 +54,7 @@ export default async function TravelPage() {
               <input name="end_km" type="number" step="0.1" required className="input-field" />
             </div>
           </div>
-          <button type="submit" className="btn-primary w-full py-2.5">
-            Save
-          </button>
+          <SubmitButton>Save</SubmitButton>
         </form>
       </Card>
 

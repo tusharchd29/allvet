@@ -6,6 +6,7 @@ import { Card } from "@/components/Card";
 import { LocationCapture } from "@/components/LocationCapture";
 import { ZONES, ZONE_LABEL } from "@/lib/utils";
 import { createCustomer } from "../actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -71,9 +72,7 @@ export default async function NewCustomerPage() {
             </select>
           </div>
           <LocationCapture label="Location" />
-          <button type="submit" className="btn-primary w-full py-2.5">
-            Save customer
-          </button>
+          <SubmitButton>Save customer</SubmitButton>
         </form>
       </Card>
     </div>

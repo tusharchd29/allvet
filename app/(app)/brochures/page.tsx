@@ -6,6 +6,7 @@ import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { EditableCard } from "../_shared/EditableCard";
 import { createBrochure } from "./actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -34,9 +35,7 @@ export default async function BrochuresPage() {
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">Link</label>
               <input name="url" required className="input-field" placeholder="https://..." />
             </div>
-            <button type="submit" className="btn-primary w-full py-2.5">
-              Save
-            </button>
+            <SubmitButton>Save</SubmitButton>
           </form>
         </Card>
       )}

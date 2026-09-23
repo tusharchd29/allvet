@@ -7,6 +7,7 @@ import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { AdvanceRow } from "./AdvanceRow";
 import { createAdvance } from "./actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -55,9 +56,7 @@ export default async function AdvancesPage() {
             </label>
             <input name="amount" type="number" step="0.01" required className="input-field" />
           </div>
-          <button type="submit" className="btn-primary w-full py-2.5">
-            Record advance
-          </button>
+          <SubmitButton>Record advance</SubmitButton>
         </form>
       </Card>
 

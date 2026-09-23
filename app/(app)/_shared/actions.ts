@@ -43,6 +43,13 @@ export async function updateEntry(
   }
   if (!id) throw new Error("Missing record id");
 
+  // Same floor the dedicated create actions enforce (e.g. createExpense,
+  // createAdvance) — the generic inline-edit widget shares these fields but
+  // previously skipped this check entirely.
+  if ("amount" in data && data.amount !== null && typeof data.amount === "number" && data.amount <= 0) {
+    throw new Error("Amount must be greater than zero.");
+  }
+
   if (session.role !== "owner") {
     if (OWNER_ONLY_TABLES.has(table)) {
       throw new Error(NOT_ALLOWED_MESSAGE);

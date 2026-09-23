@@ -6,6 +6,7 @@ import { Card } from "@/components/Card";
 import { ProgressBar } from "@/components/ProgressBar";
 import { formatCurrency } from "@/lib/utils";
 import { setTarget } from "./actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -128,9 +129,7 @@ export default async function TargetsPage() {
                 />
               </div>
             </div>
-            <button type="submit" className="btn-primary w-full py-2.5">
-              Save target
-            </button>
+            <SubmitButton>Save target</SubmitButton>
           </form>
         </Card>
       )}

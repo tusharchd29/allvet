@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { EditableCard } from "../_shared/EditableCard";
 import { formatDate } from "@/lib/utils";
 import { createTrial } from "./actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -71,9 +72,7 @@ export default async function TrialsPage() {
             </label>
             <textarea name="outcome_notes" rows={2} className="input-field" placeholder="Optional" />
           </div>
-          <button type="submit" className="btn-primary w-full py-2.5">
-            Save trial
-          </button>
+          <SubmitButton>Save trial</SubmitButton>
         </form>
       </Card>
 

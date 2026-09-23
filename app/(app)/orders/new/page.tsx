@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { createOrder } from "../actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -69,9 +70,7 @@ export default async function NewOrderPage() {
             </label>
             <textarea name="notes" rows={2} className="input-field" placeholder="Optional" />
           </div>
-          <button type="submit" className="btn-primary w-full py-2.5">
-            Create order
-          </button>
+          <SubmitButton>Create order</SubmitButton>
         </form>
       </Card>
     </div>

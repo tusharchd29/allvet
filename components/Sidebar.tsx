@@ -1,9 +1,38 @@
+"use client";
+
 import Link from "next/link";
-import { EVERYDAY_NAV, GROWTH_NAV } from "./nav-config";
+import { usePathname } from "next/navigation";
+import { EVERYDAY_NAV, GROWTH_NAV, type NavItem } from "./nav-config";
 import { Icon } from "./icon";
+import { cn } from "@/lib/utils";
 import type { Session } from "@/lib/session";
 
+function isActive(pathname: string, href: string) {
+  return pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+}
+
+function NavLink({ item, pathname, iconClassName }: { item: NavItem; pathname: string; iconClassName: string }) {
+  const active = isActive(pathname, item.href);
+  return (
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm transition-colors",
+        active
+          ? "bg-[var(--offwhite)] text-[var(--ink)] font-medium"
+          : "text-[var(--ink)] hover:bg-[var(--offwhite)]",
+      )}
+    >
+      <Icon name={item.icon} size={17} className={active ? "text-[var(--ink)]" : iconClassName} />
+      {item.label}
+    </Link>
+  );
+}
+
 export function Sidebar({ session }: { session: Session }) {
+  const pathname = usePathname();
+
   return (
     <aside className="hidden md:flex md:flex-col md:w-64 md:shrink-0 border-r border-[var(--border)] bg-white h-screen sticky top-0">
       <div className="px-5 py-5 flex items-center gap-3 border-b border-[var(--border)]">
@@ -27,13 +56,7 @@ export function Sidebar({ session }: { session: Session }) {
         <ul className="space-y-0.5 mb-5">
           {EVERYDAY_NAV.map((item) => (
             <li key={item.href}>
-              <Link
-                href={item.href}
-                className="flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm text-[var(--ink)] hover:bg-[var(--offwhite)] transition-colors"
-              >
-                <Icon name={item.icon} size={17} className="text-[var(--teal)]" />
-                {item.label}
-              </Link>
+              <NavLink item={item} pathname={pathname} iconClassName="text-[var(--teal)]" />
             </li>
           ))}
         </ul>
@@ -44,13 +67,7 @@ export function Sidebar({ session }: { session: Session }) {
         <ul className="space-y-0.5">
           {GROWTH_NAV.map((item) => (
             <li key={item.href}>
-              <Link
-                href={item.href}
-                className="flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm text-[var(--ink)] hover:bg-[var(--offwhite)] transition-colors"
-              >
-                <Icon name={item.icon} size={17} className="text-[var(--seafoam)]" />
-                {item.label}
-              </Link>
+              <NavLink item={item} pathname={pathname} iconClassName="text-[var(--seafoam)]" />
             </li>
           ))}
         </ul>

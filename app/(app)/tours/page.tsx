@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { EditableCard } from "../_shared/EditableCard";
 import { formatDate } from "@/lib/utils";
 import { createTourPlan } from "./actions";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export const dynamic = "force-dynamic";
 
@@ -49,9 +50,7 @@ export default async function ToursPage() {
               placeholder="Which routes / customers this week"
             />
           </div>
-          <button type="submit" className="btn-primary w-full py-2.5">
-            Save plan
-          </button>
+          <SubmitButton>Save plan</SubmitButton>
         </form>
       </Card>
 

@@ -73,17 +73,25 @@ export function MapView({
             key={c.id}
             position={[c.latitude, c.longitude]}
             icon={pinIcon(ZONE_COLOR[c.zone ?? ""] ?? "#028090")}
+            // In the non-interactive dashboard preview the whole card is a
+            // single <Link href="/map">; a clickable marker underneath it
+            // would fight that link for the tap (opening a popup instead of,
+            // or in addition to, navigating). Only the full /map view (which
+            // isn't wrapped in its own link) gets clickable pins with popups.
+            interactive={interactive}
           >
-            <Popup>
-              <div className="font-medium">{c.name}</div>
-              <div className="text-xs text-gray-500">
-                {c.segment ?? "General"}
-                {c.zone && ` · ${ZONE_LABEL[c.zone as Zone] ?? c.zone}`}
-              </div>
-              <Link href={`/customers/${c.id}`} className="text-xs underline text-teal-700">
-                View customer
-              </Link>
-            </Popup>
+            {interactive && (
+              <Popup>
+                <div className="font-medium">{c.name}</div>
+                <div className="text-xs text-gray-500">
+                  {c.segment ?? "General"}
+                  {c.zone && ` · ${ZONE_LABEL[c.zone as Zone] ?? c.zone}`}
+                </div>
+                <Link href={`/customers/${c.id}`} className="text-xs underline text-teal-700">
+                  View customer
+                </Link>
+              </Popup>
+            )}
           </Marker>
         ))}
       </MapContainer>
