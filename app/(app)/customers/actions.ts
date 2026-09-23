@@ -19,7 +19,7 @@ export async function createCustomer(formData: FormData) {
   const latitude = latRaw ? Number(latRaw) : null;
   const longitude = lngRaw ? Number(lngRaw) : null;
 
-  if (!name) throw new Error("Name is required");
+  if (!name) return { ok: false, message: "Name is required" };
 
   if (segment) {
     await supabaseAdmin.from("av_segments").upsert({ name: segment }, { onConflict: "name" });
@@ -36,8 +36,8 @@ export async function createCustomer(formData: FormData) {
     rep_id: session.userId,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
 
   revalidatePath("/customers");
-  redirect("/customers");
+  return { ok: true };
 }

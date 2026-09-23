@@ -9,6 +9,7 @@ import { EditableCard } from "../_shared/EditableCard";
 import { formatDate } from "@/lib/utils";
 import { createTrial } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ActionForm } from "@/components/ActionForm";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export default async function TrialsPage() {
 
       <Card className="mb-6">
         <div className="font-medium text-[var(--ink)] mb-3">Log a trial</div>
-        <form action={createTrial} className="space-y-4">
+        <ActionForm action={createTrial} resetOnSuccess className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">
               Customer
@@ -73,7 +74,7 @@ export default async function TrialsPage() {
             <textarea name="outcome_notes" rows={2} className="input-field" placeholder="Optional" />
           </div>
           <SubmitButton>Save trial</SubmitButton>
-        </form>
+        </ActionForm>
       </Card>
 
       {!trials || trials.length === 0 ? (

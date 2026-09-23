@@ -14,7 +14,7 @@ export async function createOrder(formData: FormData) {
   const notes = String(formData.get("notes") || "").trim() || null;
   const payment_due_date = String(formData.get("payment_due_date") || "") || null;
 
-  if (!customer_id) throw new Error("Customer is required");
+  if (!customer_id) return { ok: false, message: "Customer is required" };
 
   // Three parallel field arrays from the repeating OrderItemsField rows —
   // FormData.getAll preserves DOM order, so index i of each array is one
@@ -29,9 +29,9 @@ export async function createOrder(formData: FormData) {
     .map((name, i) => ({ name, quantity: quantities[i], unitPrice: unitPrices[i] }))
     .filter((it) => it.name);
 
-  if (items.length === 0) throw new Error("At least one product is required");
+  if (items.length === 0) return { ok: false, message: "At least one product is required" };
   if (items.some((it) => !it.quantity || it.quantity <= 0 || Number.isNaN(it.quantity))) {
-    throw new Error("Every product needs a quantity greater than zero");
+    return { ok: false, message: "Every product needs a quantity greater than zero" };
   }
 
   // Link each line back to the catalog by exact (case-insensitive) name
@@ -75,15 +75,23 @@ export async function createOrder(formData: FormData) {
     .select("id")
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
 
   const { error: itemsError } = await supabaseAdmin
     .from("av_order_items")
     .insert(lineItems.map((li) => ({ ...li, order_id: order.id })));
-  if (itemsError) throw new Error(itemsError.message);
+  if (itemsError) {
+    // The order header exists but its lines don't — surface this precisely
+    // rather than implying nothing was saved (which would invite a
+    // duplicate order on retry). The owner can clean this up from Orders.
+    return {
+      ok: false,
+      message: `Order created but its line items failed to save: ${itemsError.message}. Check Orders before re-submitting.`,
+    };
+  }
 
   revalidatePath("/orders");
-  redirect("/orders");
+  return { ok: true };
 }
 
 /**

@@ -8,6 +8,7 @@ import { createOrder } from "../actions";
 import { SubmitButton } from "@/components/SubmitButton";
 import { OrderItemsField } from "../OrderItemsField";
 import { DueDatePresets } from "@/components/DueDatePresets";
+import { ActionForm } from "@/components/ActionForm";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export default async function NewOrderPage() {
     <div>
       <PageHeader title="New order" />
       <Card>
-        <form action={createOrder} className="space-y-4">
+        <ActionForm action={createOrder} redirectTo="/orders" className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">
               Customer
@@ -65,7 +66,7 @@ export default async function NewOrderPage() {
             <textarea name="notes" rows={2} className="input-field" placeholder="Optional" />
           </div>
           <SubmitButton>Create order</SubmitButton>
-        </form>
+        </ActionForm>
       </Card>
     </div>
   );

@@ -9,7 +9,9 @@ import { AdvanceRow } from "./AdvanceRow";
 import { createAdvance } from "./actions";
 import { createRepAdvance } from "./rep-actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ActionForm } from "@/components/ActionForm";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { ClaimsSection, type Claim } from "./ClaimsSection";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,26 @@ export default async function AdvancesPage() {
   const { data: customers } = await customersQuery;
 
   const { reps: repBalances, entries: repAdvanceEntries } = await getRepAdvanceReconciliation(session);
+
+  const claimsQuery = supabaseAdmin
+    .from("av_rep_claims")
+    .select("id, rep_id, amount, notes, status, created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (repId) claimsQuery.eq("rep_id", repId);
+  const { data: claimRows } = await claimsQuery;
+  const claimsByRep = new Map<string, Claim[]>();
+  for (const c of claimRows ?? []) {
+    const list = claimsByRep.get(c.rep_id) ?? [];
+    list.push({
+      id: c.id,
+      amount: c.amount,
+      notes: c.notes,
+      status: c.status as Claim["status"],
+      created_at: c.created_at,
+    });
+    claimsByRep.set(c.rep_id, list);
+  }
   const { data: repUsers } =
     session.role === "owner"
       ? await supabaseAdmin.from("av_users").select("id, name").eq("role", "rep").order("name")
@@ -43,23 +65,31 @@ export default async function AdvancesPage() {
       <div className="font-medium text-[var(--ink)] mb-2">Rep cash advances</div>
       <div className="space-y-2 mb-3">
         {repBalances.map((r) => (
-          <Card key={r.repId} className="flex items-center justify-between">
-            <div>
-              <div className="font-medium text-[var(--ink)]">{r.name}</div>
-              <div className="text-xs text-[var(--muted)] mt-0.5">
-                Advanced {formatCurrency(r.advanced)} · Spent {formatCurrency(r.spent)}
+          <Card key={r.repId}>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="font-medium text-[var(--ink)]">{r.name}</div>
+                <div className="text-xs text-[var(--muted)] mt-0.5">
+                  Advanced {formatCurrency(r.advanced)} · Spent {formatCurrency(r.spent)}
+                </div>
+              </div>
+              <div className="text-right">
+                <div
+                  className={`font-semibold ${r.balance < 0 ? "text-red-600" : "text-[var(--ink)]"}`}
+                >
+                  {formatCurrency(Math.abs(r.balance))}
+                </div>
+                <div className="text-xs text-[var(--muted)]">
+                  {r.balance < 0 ? "Owed to rep" : "Advance remaining"}
+                </div>
               </div>
             </div>
-            <div className="text-right">
-              <div
-                className={`font-semibold ${r.balance < 0 ? "text-red-600" : "text-[var(--ink)]"}`}
-              >
-                {formatCurrency(Math.abs(r.balance))}
-              </div>
-              <div className="text-xs text-[var(--muted)]">
-                {r.balance < 0 ? "Owed to rep" : "Advance remaining"}
-              </div>
-            </div>
+            <ClaimsSection
+              balance={r.balance}
+              claims={claimsByRep.get(r.repId) ?? []}
+              canSubmit={session.role !== "owner" && session.userId === r.repId}
+              canResolve={session.role === "owner"}
+            />
           </Card>
         ))}
       </div>
@@ -67,7 +97,7 @@ export default async function AdvancesPage() {
       {session.role === "owner" && (
         <Card className="mb-6">
           <div className="font-medium text-[var(--ink)] mb-3">Give a rep an advance</div>
-          <form action={createRepAdvance} className="space-y-4">
+          <ActionForm action={createRepAdvance} resetOnSuccess className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">Rep</label>
               <select name="rep_id" required className="input-field" defaultValue="">
@@ -103,7 +133,7 @@ export default async function AdvancesPage() {
               <input name="purpose" className="input-field" placeholder="Optional" />
             </div>
             <SubmitButton>Give advance</SubmitButton>
-          </form>
+          </ActionForm>
         </Card>
       )}
 
@@ -127,7 +157,7 @@ export default async function AdvancesPage() {
       <div className="font-medium text-[var(--ink)] mb-2">Customer advances</div>
       <Card className="mb-6">
         <div className="font-medium text-[var(--ink)] mb-3">Record an advance</div>
-        <form action={createAdvance} className="space-y-4">
+        <ActionForm action={createAdvance} resetOnSuccess className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">
               Customer
@@ -150,7 +180,7 @@ export default async function AdvancesPage() {
             <input name="amount" type="number" step="0.01" required className="input-field" />
           </div>
           <SubmitButton>Record advance</SubmitButton>
-        </form>
+        </ActionForm>
       </Card>
 
       {!advances || advances.length === 0 ? (

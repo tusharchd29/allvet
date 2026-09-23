@@ -31,14 +31,20 @@ export function TourStops({
 }) {
   const [adding, setAdding] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const doneCount = stops.filter((s) => s.completed).length;
 
   function handleAdd(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
+    setError(null);
     startTransition(async () => {
-      await createTourStop(fd);
+      const result = await createTourStop(fd);
+      if (result && result.ok === false) {
+        setError(result.message || "Couldn't add that stop — try again.");
+        return;
+      }
       formRef.current?.reset();
       setAdding(false);
     });
@@ -49,6 +55,12 @@ export function TourStops({
       <div className="text-xs text-[var(--muted)] mb-2">
         {stops.length === 0 ? "No stops planned yet" : `${doneCount}/${stops.length} visited`}
       </div>
+
+      {error && (
+        <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-2 py-1.5 mb-2">
+          {error}
+        </div>
+      )}
 
       {stops.length > 0 && (
         <div className="space-y-1.5 mb-2">
@@ -61,8 +73,10 @@ export function TourStops({
                   disabled={pending}
                   onChange={(e) => {
                     const checked = e.target.checked;
+                    setError(null);
                     startTransition(async () => {
-                      await toggleTourStop(s.id, tourId, checked);
+                      const result = await toggleTourStop(s.id, tourId, checked);
+                      if (!result.ok) setError(result.message || "Couldn't update that stop.");
                     });
                   }}
                   className="w-4 h-4 shrink-0"
@@ -77,7 +91,13 @@ export function TourStops({
               <button
                 type="button"
                 disabled={pending}
-                onClick={() => startTransition(async () => { await deleteTourStop(s.id, tourId); })}
+                onClick={() => {
+                  setError(null);
+                  startTransition(async () => {
+                    const result = await deleteTourStop(s.id, tourId);
+                    if (!result.ok) setError(result.message || "Couldn't remove that stop.");
+                  });
+                }}
                 className="text-[var(--muted)] hover:text-red-600 shrink-0 p-1 disabled:opacity-30"
                 aria-label="Remove stop"
               >

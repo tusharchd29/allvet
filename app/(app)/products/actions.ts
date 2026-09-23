@@ -15,7 +15,7 @@ export async function createProduct(formData: FormData) {
   const priceRaw = String(formData.get("default_price") || "").trim();
   const default_price = priceRaw ? Number(priceRaw) : null;
 
-  if (!name) throw new Error("Product name is required");
+  if (!name) return { ok: false, message: "Product name is required" };
 
   const { error } = await supabaseAdmin.from("av_products").insert({
     name,
@@ -24,9 +24,9 @@ export async function createProduct(formData: FormData) {
     default_price,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
 
   revalidatePath("/products");
   revalidatePath("/orders/new");
-  redirect("/products");
+  return { ok: true };
 }

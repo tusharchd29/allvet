@@ -7,6 +7,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { EditableCard } from "../_shared/EditableCard";
 import { createBrochure } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ActionForm } from "@/components/ActionForm";
+import { BrochureFileField } from "@/components/BrochureFileField";
 
 export const dynamic = "force-dynamic";
 
@@ -26,23 +28,12 @@ export default async function BrochuresPage() {
       {session.role === "owner" && (
         <Card className="mb-6">
           <div className="font-medium text-[var(--ink)] mb-3">Add a brochure</div>
-          <form action={createBrochure} className="space-y-4">
+          <ActionForm action={createBrochure} resetOnSuccess className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">Title</label>
               <input name="title" required className="input-field" />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-[var(--ink)] mb-1">
-                Upload file (PDF, JPEG, PNG, or WEBP)
-              </label>
-              <input
-                type="file"
-                name="file"
-                accept="application/pdf,image/jpeg,image/png,image/webp"
-                className="input-field file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[var(--teal)]/10 file:text-[var(--teal)] file:text-sm file:font-medium file:cursor-pointer"
-              />
-              <p className="text-xs text-[var(--muted)] mt-1">Up to 20 MB.</p>
-            </div>
+            <BrochureFileField />
             <div>
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">
                 Or paste a link instead
@@ -50,7 +41,7 @@ export default async function BrochuresPage() {
               <input name="url" className="input-field" placeholder="https://..." />
             </div>
             <SubmitButton>Save</SubmitButton>
-          </form>
+          </ActionForm>
         </Card>
       )}
 

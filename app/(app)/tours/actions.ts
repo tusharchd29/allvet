@@ -13,7 +13,7 @@ export async function createTourPlan(formData: FormData) {
   const zone = String(formData.get("zone") || "").trim() || null;
   const plan_notes = String(formData.get("plan_notes") || "").trim() || null;
 
-  if (!week_start) throw new Error("Week is required");
+  if (!week_start) return { ok: false, message: "Week is required" };
 
   const { error } = await supabaseAdmin.from("av_tours").insert({
     rep_id: session.userId,
@@ -22,10 +22,10 @@ export async function createTourPlan(formData: FormData) {
     plan_notes,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
 
   revalidatePath("/tours");
-  redirect("/tours");
+  return { ok: true };
 }
 
 /** True if this session may act on the given tour — the owner may touch
@@ -50,15 +50,18 @@ export async function createTourStop(formData: FormData) {
   const planned_date = String(formData.get("planned_date") || "");
   const notes = String(formData.get("notes") || "").trim() || null;
 
-  if (!tour_id || !planned_date) throw new Error("A planned date is required");
-  if (!(await canActOnTour(session, tour_id))) throw new Error("Tour plan not found");
+  if (!tour_id || !planned_date) return { ok: false, message: "A planned date is required" };
+  if (!(await canActOnTour(session, tour_id))) {
+    return { ok: false, message: "Tour plan not found" };
+  }
 
   const { error } = await supabaseAdmin
     .from("av_tour_stops")
     .insert({ tour_id, customer_id, planned_date, notes });
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
 
   revalidatePath("/tours");
+  return { ok: true };
 }
 
 export async function toggleTourStop(stopId: string, tourId: string, completed: boolean) {

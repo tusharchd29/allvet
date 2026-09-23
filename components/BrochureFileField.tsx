@@ -3,28 +3,21 @@
 import { useState } from "react";
 import { useActionFormPending } from "./ActionForm";
 
-/**
- * File input for attaching a supporting-evidence photo to a Visit, Expense,
- * or Travel Log entry. Posts through the enclosing `ActionForm`'s FormData;
- * the device camera opens directly on mobile via `capture`.
- *
- * A field rep uploading an 8MB photo on 2G/3G has no way to tell a slow
- * upload apart from a hung one — this shows the picked file's name/size up
- * front and an explicit "don't close this" notice while the surrounding
- * form is submitting, instead of a silent file input.
- */
-export function PhotoField({ label = "Photo (optional)" }: { label?: string }) {
+/** Same rationale as PhotoField — up to 20 MB brochure files deserve the
+ * same "picked file + don't close this" feedback while uploading. */
+export function BrochureFileField() {
   const [picked, setPicked] = useState<{ name: string; size: number } | null>(null);
   const pending = useActionFormPending();
 
   return (
     <div>
-      <label className="block text-sm font-medium text-[var(--ink)] mb-1">{label}</label>
+      <label className="block text-sm font-medium text-[var(--ink)] mb-1">
+        Upload file (PDF, JPEG, PNG, or WEBP)
+      </label>
       <input
         type="file"
-        name="photo"
-        accept="image/jpeg,image/png,image/webp,image/heic"
-        capture="environment"
+        name="file"
+        accept="application/pdf,image/jpeg,image/png,image/webp"
         disabled={pending}
         onChange={(e) => {
           const f = e.target.files?.[0];
@@ -33,9 +26,7 @@ export function PhotoField({ label = "Photo (optional)" }: { label?: string }) {
         className="input-field file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-[var(--teal)]/10 file:text-[var(--teal)] file:text-sm file:font-medium file:cursor-pointer disabled:opacity-60"
       />
       <p className="text-xs text-[var(--muted)] mt-1">
-        {picked
-          ? `${picked.name} · ${(picked.size / (1024 * 1024)).toFixed(1)} MB`
-          : "JPEG, PNG, WEBP, or HEIC — up to 10 MB."}
+        {picked ? `${picked.name} · ${(picked.size / (1024 * 1024)).toFixed(1)} MB` : "Up to 20 MB."}
       </p>
       {pending && picked && (
         <p className="text-xs text-[var(--teal)] mt-1">

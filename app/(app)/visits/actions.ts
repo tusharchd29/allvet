@@ -23,7 +23,7 @@ export async function createVisit(formData: FormData) {
   const latitude = latRaw ? Number(latRaw) : null;
   const longitude = lngRaw ? Number(lngRaw) : null;
 
-  if (!customer_id) throw new Error("Customer is required");
+  if (!customer_id) return { ok: false, message: "Customer is required" };
 
   const { data: inserted, error } = await supabaseAdmin
     .from("av_visits")
@@ -41,10 +41,21 @@ export async function createVisit(formData: FormData) {
     .select("id")
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
 
-  await attachPhotoIfPresent(formData, "photo", "visit", inserted.id, session.userId);
+  try {
+    await attachPhotoIfPresent(formData, "photo", "visit", inserted.id, session.userId);
+  } catch (err) {
+    // The visit itself is already saved at this point — only the photo
+    // failed. Say so specifically rather than implying the whole visit
+    // needs re-entering.
+    revalidatePath("/visits");
+    return {
+      ok: false,
+      message: `Visit saved, but the photo didn't upload: ${err instanceof Error ? err.message : "unknown error"}. You can retry the photo from the visit's edit view.`,
+    };
+  }
 
   revalidatePath("/visits");
-  redirect("/visits");
+  return { ok: true };
 }

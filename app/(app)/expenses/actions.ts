@@ -16,7 +16,9 @@ export async function createExpense(formData: FormData) {
   const expense_date =
     String(formData.get("expense_date") || "") || new Date().toISOString().slice(0, 10);
 
-  if (!category || amount <= 0) throw new Error("Category and amount are required");
+  if (!category || amount <= 0) {
+    return { ok: false, message: "Category and a positive amount are required" };
+  }
 
   const { data: inserted, error } = await supabaseAdmin
     .from("av_expenses")
@@ -30,10 +32,18 @@ export async function createExpense(formData: FormData) {
     .select("id")
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
 
-  await attachPhotoIfPresent(formData, "photo", "expense", inserted.id, session.userId);
+  try {
+    await attachPhotoIfPresent(formData, "photo", "expense", inserted.id, session.userId);
+  } catch (err) {
+    revalidatePath("/expenses");
+    return {
+      ok: false,
+      message: `Expense saved, but the receipt photo didn't upload: ${err instanceof Error ? err.message : "unknown error"}.`,
+    };
+  }
 
   revalidatePath("/expenses");
-  redirect("/expenses");
+  return { ok: true };
 }

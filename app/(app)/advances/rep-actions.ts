@@ -21,13 +21,15 @@ export async function createRepAdvance(formData: FormData) {
   const purpose = String(formData.get("purpose") || "").trim() || null;
   const given_at = String(formData.get("given_at") || "") || new Date().toISOString().slice(0, 10);
 
-  if (!rep_id || !amount || amount <= 0) throw new Error("Rep and a positive amount are required");
+  if (!rep_id || !amount || amount <= 0) {
+    return { ok: false, message: "Rep and a positive amount are required" };
+  }
 
   const { error } = await supabaseAdmin
     .from("av_rep_advances")
     .insert({ rep_id, amount, purpose, given_at });
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
 
   revalidatePath("/advances");
-  redirect("/advances");
+  return { ok: true };
 }

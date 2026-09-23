@@ -9,6 +9,7 @@ import { EditableCard } from "../_shared/EditableCard";
 import { formatDate } from "@/lib/utils";
 import { createCompetitorIntel } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ActionForm } from "@/components/ActionForm";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export default async function CompetitorIntelPage() {
 
       <Card className="mb-6">
         <div className="font-medium text-[var(--ink)] mb-3">Log intel</div>
-        <form action={createCompetitorIntel} className="space-y-4">
+        <ActionForm action={createCompetitorIntel} resetOnSuccess className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">
               Customer
@@ -74,7 +75,7 @@ export default async function CompetitorIntelPage() {
             <textarea name="notes" rows={2} className="input-field" placeholder="What they're offering" />
           </div>
           <SubmitButton>Save</SubmitButton>
-        </form>
+        </ActionForm>
       </Card>
 
       {!intel || intel.length === 0 ? (

@@ -9,6 +9,7 @@ import { EditableCard } from "../_shared/EditableCard";
 import { formatDate, ZONES, ZONE_LABEL, type Zone } from "@/lib/utils";
 import { createTourPlan } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ActionForm } from "@/components/ActionForm";
 import { TourStops, type Stop } from "./TourStops";
 
 export const dynamic = "force-dynamic";
@@ -60,7 +61,7 @@ export default async function ToursPage() {
 
       <Card className="mb-6">
         <div className="font-medium text-[var(--ink)] mb-3">Plan a week</div>
-        <form action={createTourPlan} className="space-y-4">
+        <ActionForm action={createTourPlan} resetOnSuccess className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">
@@ -95,7 +96,7 @@ export default async function ToursPage() {
             Add specific customer stops once the plan is saved.
           </p>
           <SubmitButton>Save plan</SubmitButton>
-        </form>
+        </ActionForm>
       </Card>
 
       {!tours || tours.length === 0 ? (

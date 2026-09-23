@@ -24,7 +24,8 @@ export default async function CustomersPage({
   const query = supabaseAdmin
     .from("av_customers")
     .select("id, name, phone, address, segment, zone")
-    .order("name");
+    .order("name")
+    .limit(200);
   if (repId) query.eq("rep_id", repId);
   if (zoneFilter) query.eq("zone", zoneFilter);
   const { data: customers } = await query;

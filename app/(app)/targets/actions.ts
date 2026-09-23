@@ -14,7 +14,7 @@ export async function setTarget(formData: FormData) {
   const period_month = String(formData.get("period_month") || "");
 
   if (!rep_id || !period_month || target_amount <= 0) {
-    throw new Error("All fields are required");
+    return { ok: false, message: "All fields are required" };
   }
 
   const { error } = await supabaseAdmin
@@ -24,8 +24,9 @@ export async function setTarget(formData: FormData) {
       { onConflict: "rep_id,period_month" },
     );
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
 
   revalidatePath("/targets");
   revalidatePath("/dashboard");
+  return { ok: true };
 }

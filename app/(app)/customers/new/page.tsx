@@ -7,6 +7,7 @@ import { LocationCapture } from "@/components/LocationCapture";
 import { ZONES, ZONE_LABEL } from "@/lib/utils";
 import { createCustomer } from "../actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ActionForm } from "@/components/ActionForm";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export default async function NewCustomerPage() {
     <div>
       <PageHeader title="New customer" subtitle="Add a clinic or farm" />
       <Card>
-        <form action={createCustomer} className="space-y-4">
+        <ActionForm action={createCustomer} redirectTo="/customers" className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">
               Name
@@ -73,7 +74,7 @@ export default async function NewCustomerPage() {
           </div>
           <LocationCapture label="Location" />
           <SubmitButton>Save customer</SubmitButton>
-        </form>
+        </ActionForm>
       </Card>
     </div>
   );

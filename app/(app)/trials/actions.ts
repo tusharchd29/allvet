@@ -15,7 +15,9 @@ export async function createTrial(formData: FormData) {
     String(formData.get("trial_date") || "") || new Date().toISOString().slice(0, 10);
   const outcome_notes = String(formData.get("outcome_notes") || "").trim() || null;
 
-  if (!customer_id || !product) throw new Error("Customer and product are required");
+  if (!customer_id || !product) {
+    return { ok: false, message: "Customer and product are required" };
+  }
 
   const { error } = await supabaseAdmin.from("av_product_trials").insert({
     customer_id,
@@ -25,8 +27,8 @@ export async function createTrial(formData: FormData) {
     outcome_notes,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
 
   revalidatePath("/trials");
-  redirect("/trials");
+  return { ok: true };
 }

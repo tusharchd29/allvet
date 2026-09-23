@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Card } from "@/components/Card";
 import { Icon } from "@/components/icon";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatCurrency } from "@/lib/utils";
 import { updateTravelLog } from "./actions";
 import { PhotoThumbs } from "@/components/PhotoThumbs";
 import type { EntityPhoto } from "@/lib/photos";
@@ -14,6 +14,7 @@ export type TravelLog = {
   start_km: number;
   end_km: number;
   distance_km: number;
+  rate_per_km?: number | null;
   repName?: string | null;
 };
 
@@ -60,7 +61,14 @@ export function TravelRow({
           <PhotoThumbs photos={photos} />
         </div>
         <div className="flex items-center gap-3">
-          <div className="font-medium text-[var(--ink)]">{distance} km</div>
+          <div className="text-right">
+            <div className="font-medium text-[var(--ink)]">{distance} km</div>
+            {log.rate_per_km != null && (
+              <div className="text-xs text-[var(--muted)]">
+                {formatCurrency(distance * log.rate_per_km)}
+              </div>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => setEditing(true)}

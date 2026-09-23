@@ -12,7 +12,9 @@ export async function createAdvance(formData: FormData) {
   const customer_id = String(formData.get("customer_id") || "");
   const amount = Number(formData.get("amount") || 0);
 
-  if (!customer_id || amount <= 0) throw new Error("Customer and amount are required");
+  if (!customer_id || amount <= 0) {
+    return { ok: false, message: "Customer and a positive amount are required" };
+  }
 
   const { error } = await supabaseAdmin.from("av_advances").insert({
     customer_id,
@@ -21,10 +23,10 @@ export async function createAdvance(formData: FormData) {
     status: "pending",
   });
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
 
   revalidatePath("/advances");
-  redirect("/advances");
+  return { ok: true };
 }
 
 export async function settleAdvance(advanceId: string) {

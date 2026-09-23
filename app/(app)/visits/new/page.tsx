@@ -8,6 +8,7 @@ import { LocationCapture } from "@/components/LocationCapture";
 import { createVisit } from "../actions";
 import { SubmitButton } from "@/components/SubmitButton";
 import { PhotoField } from "@/components/PhotoField";
+import { ActionForm } from "@/components/ActionForm";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export default async function NewVisitPage() {
     <div>
       <PageHeader title="Log a visit" />
       <Card>
-        <form action={createVisit} className="space-y-4">
+        <ActionForm action={createVisit} redirectTo="/visits" className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">
               Customer
@@ -81,7 +82,7 @@ export default async function NewVisitPage() {
           <LocationCapture label="Visit location" />
           <PhotoField />
           <SubmitButton>Save visit</SubmitButton>
-        </form>
+        </ActionForm>
       </Card>
     </div>
   );

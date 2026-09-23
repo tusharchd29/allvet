@@ -8,6 +8,7 @@ import { EditableCard } from "../_shared/EditableCard";
 import { formatCurrency } from "@/lib/utils";
 import { createProduct } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ActionForm } from "@/components/ActionForm";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export default async function ProductsPage() {
 
       <Card className="mb-6">
         <div className="font-medium text-[var(--ink)] mb-3">Add a product</div>
-        <form action={createProduct} className="space-y-4">
+        <ActionForm action={createProduct} resetOnSuccess className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">Name</label>
             <input name="name" required className="input-field" placeholder="e.g. Calcium Bolus" />
@@ -68,7 +69,7 @@ export default async function ProductsPage() {
             <input name="default_price" type="number" step="0.01" className="input-field" placeholder="Optional" />
           </div>
           <SubmitButton>Add product</SubmitButton>
-        </form>
+        </ActionForm>
       </Card>
 
       {!products || products.length === 0 ? (

@@ -1,11 +1,11 @@
 "use client";
 
-import { useFormStatus } from "react-dom";
 import { cn } from "@/lib/utils";
+import { useActionFormPending } from "./ActionForm";
 
 /**
- * Submit button for a plain `<form action={serverAction}>`. Disables itself
- * and swaps its label while the action is in flight, so a rep on a slow
+ * Submit button for a form wrapped in `<ActionForm>`. Disables itself and
+ * swaps its label while the action is in flight, so a rep on a slow
  * connection can't fire the same create action twice by tapping again.
  */
 export function SubmitButton({
@@ -17,7 +17,7 @@ export function SubmitButton({
   pendingLabel?: string;
   className?: string;
 }) {
-  const { pending } = useFormStatus();
+  const pending = useActionFormPending();
   return (
     <button
       type="submit"

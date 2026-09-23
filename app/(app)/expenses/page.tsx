@@ -12,6 +12,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { PhotoField } from "@/components/PhotoField";
 import { PhotoThumbs } from "@/components/PhotoThumbs";
 import { getPhotosForEntities } from "@/lib/photos";
+import { ActionForm } from "@/components/ActionForm";
 import { parseDateRange } from "@/lib/date-range";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 
@@ -49,7 +50,7 @@ export default async function ExpensesPage({
 
       <Card className="mb-6">
         <div className="font-medium text-[var(--ink)] mb-3">Log an expense</div>
-        <form action={createExpense} className="space-y-4">
+        <ActionForm action={createExpense} resetOnSuccess className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">
@@ -79,7 +80,7 @@ export default async function ExpensesPage({
           </div>
           <PhotoField label="Receipt photo (optional)" />
           <SubmitButton>Add expense</SubmitButton>
-        </form>
+        </ActionForm>
       </Card>
 
       {!expenses || expenses.length === 0 ? (

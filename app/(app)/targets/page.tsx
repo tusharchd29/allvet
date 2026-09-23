@@ -7,6 +7,7 @@ import { ProgressBar } from "@/components/ProgressBar";
 import { formatCurrency } from "@/lib/utils";
 import { setTarget } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ActionForm } from "@/components/ActionForm";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +88,7 @@ export default async function TargetsPage() {
       {session.role === "owner" && (
         <Card>
           <div className="font-medium text-[var(--ink)] mb-3">Set a target</div>
-          <form action={setTarget} className="space-y-4">
+          <ActionForm action={setTarget} resetOnSuccess className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">
                 Rep
@@ -130,7 +131,7 @@ export default async function TargetsPage() {
               </div>
             </div>
             <SubmitButton>Save target</SubmitButton>
-          </form>
+          </ActionForm>
         </Card>
       )}
     </div>

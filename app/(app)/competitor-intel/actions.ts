@@ -15,7 +15,7 @@ export async function createCompetitorIntel(formData: FormData) {
   const notes = String(formData.get("notes") || "").trim() || null;
 
   if (!customer_id || !competitor_name) {
-    throw new Error("Customer and competitor name are required");
+    return { ok: false, message: "Customer and competitor name are required" };
   }
 
   const { error } = await supabaseAdmin.from("av_competitor_intel").insert({
@@ -26,8 +26,8 @@ export async function createCompetitorIntel(formData: FormData) {
     notes,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, message: error.message };
 
   revalidatePath("/competitor-intel");
-  redirect("/competitor-intel");
+  return { ok: true };
 }

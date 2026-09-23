@@ -25,7 +25,14 @@ export default async function PaymentsPage({
     .select("id, product, amount, payment_due_date, created_at, customer_id, av_customers(name)")
     .eq("status", "fulfilled")
     .not("amount", "is", null)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    // Bounded like every other list page. 300 fulfilled orders is well
+    // beyond what a 5-person team accumulates between cleanups, and this
+    // page only needs the *outstanding* ones anyway (filtered below) —
+    // the oldest-first ordering combined with this cap means a very old
+    // unpaid balance could in theory scroll out of range over years of
+    // use; worth revisiting with real pagination if that ever happens.
+    .limit(300);
   if (repId) ordersQuery.eq("rep_id", repId);
   const { data: orders } = await ordersQuery;
 
