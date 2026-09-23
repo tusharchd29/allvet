@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Icon } from "@/components/icon";
+import { Autocomplete } from "@/components/Autocomplete";
 import { formatCurrency, formatPackSize } from "@/lib/utils";
 
 export type CatalogProduct = {
@@ -76,14 +77,14 @@ export function OrderItemsField({
           return (
             <div key={r.key}>
               <div className="grid grid-cols-[1fr_64px_88px_28px] gap-2 items-center">
-                <input
+                <Autocomplete
                   name="item_product"
                   required
                   className="input-field text-sm"
                   placeholder="Product name"
-                  list="catalog-products"
+                  options={products.map((p) => p.name)}
                   value={r.product}
-                  onChange={(e) => onProductChange(r.key, e.target.value)}
+                  onValueChange={(v) => onProductChange(r.key, v)}
                 />
                 <input
                   name="item_quantity"
@@ -123,12 +124,6 @@ export function OrderItemsField({
           );
         })}
       </div>
-
-      <datalist id="catalog-products">
-        {products.map((p) => (
-          <option key={p.id} value={p.name} />
-        ))}
-      </datalist>
 
       <button
         type="button"

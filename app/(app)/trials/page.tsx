@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { EditableCard } from "../_shared/EditableCard";
+import { Autocomplete } from "@/components/Autocomplete";
 import { formatDate } from "@/lib/utils";
 import { createTrial } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -59,18 +60,12 @@ export default async function TrialsPage() {
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">
               Product
             </label>
-            <input
+            <Autocomplete
               name="product"
               required
-              className="input-field"
-              list="trial-products"
               placeholder="Type or pick from the catalog"
+              options={(catalogProducts ?? []).map((p) => p.name)}
             />
-            <datalist id="trial-products">
-              {(catalogProducts ?? []).map((p) => (
-                <option key={p.name} value={p.name} />
-              ))}
-            </datalist>
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">Date</label>

@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { EditableCard } from "../_shared/EditableCard";
+import { Autocomplete } from "@/components/Autocomplete";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { createExpense } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -108,18 +109,12 @@ export default async function ExpensesPage({
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">
                 Category
               </label>
-              <input
+              <Autocomplete
                 name="category"
                 required
-                className="input-field"
                 placeholder="e.g. Fuel"
-                list="expense-categories"
+                options={categories as string[]}
               />
-              <datalist id="expense-categories">
-                {categories.map((c) => (
-                  <option key={c} value={c} />
-                ))}
-              </datalist>
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">

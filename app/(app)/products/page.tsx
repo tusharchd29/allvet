@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { EmptyState } from "@/components/EmptyState";
 import { EditableCard } from "../_shared/EditableCard";
+import { Autocomplete } from "@/components/Autocomplete";
 import { formatCurrency, formatPackSize, PACK_UNITS } from "@/lib/utils";
 import { createProduct } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -41,35 +42,17 @@ export default async function ProductsPage() {
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">
                 Category
               </label>
-              <input
+              <Autocomplete
                 name="category"
-                className="input-field"
                 placeholder="e.g. Supplements"
-                list="product-categories"
+                options={Array.from(new Set((products ?? []).map((p) => p.category).filter(Boolean))) as string[]}
               />
-              <datalist id="product-categories">
-                {Array.from(new Set((products ?? []).map((p) => p.category).filter(Boolean))).map(
-                  (c) => (
-                    <option key={c as string} value={c as string} />
-                  ),
-                )}
-              </datalist>
             </div>
             <div>
               <label className="block text-sm font-medium text-[var(--ink)] mb-1">
                 Unit
               </label>
-              <input
-                name="default_unit"
-                className="input-field"
-                placeholder="e.g. kg"
-                list="pack-units"
-              />
-              <datalist id="pack-units">
-                {PACK_UNITS.map((u) => (
-                  <option key={u} value={u} />
-                ))}
-              </datalist>
+              <Autocomplete name="default_unit" placeholder="e.g. kg" options={[...PACK_UNITS]} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">

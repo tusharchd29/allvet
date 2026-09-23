@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 import { LocationCapture } from "@/components/LocationCapture";
+import { Autocomplete } from "@/components/Autocomplete";
 import { ZONES, ZONE_LABEL } from "@/lib/utils";
 import { createCustomer } from "../actions";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -47,17 +48,11 @@ export default async function NewCustomerPage() {
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">
               Segment
             </label>
-            <input
+            <Autocomplete
               name="segment"
-              list="segment-suggestions"
-              className="input-field"
               placeholder="e.g. Retail, Farm, Hospital"
+              options={(segments ?? []).map((s) => s.name)}
             />
-            <datalist id="segment-suggestions">
-              {(segments ?? []).map((s) => (
-                <option key={s.name} value={s.name} />
-              ))}
-            </datalist>
           </div>
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1">
