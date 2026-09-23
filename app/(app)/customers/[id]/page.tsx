@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
+import { getRepScope } from "@/lib/data";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
@@ -18,12 +19,14 @@ export default async function CustomerDetailPage({
   const session = await getSession();
   if (!session) redirect("/login");
   const { id } = await params;
+  const repId = getRepScope(session);
 
-  const { data: customer } = await supabaseAdmin
+  let customerQuery = supabaseAdmin
     .from("av_customers")
-    .select("id, name, phone, address, segment, zone")
-    .eq("id", id)
-    .maybeSingle();
+    .select("id, name, phone, address, segment, zone, rep_id")
+    .eq("id", id);
+  if (repId) customerQuery = customerQuery.eq("rep_id", repId);
+  const { data: customer } = await customerQuery.maybeSingle();
 
   if (!customer) notFound();
 

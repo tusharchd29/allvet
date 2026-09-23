@@ -7,7 +7,9 @@ import { getSession } from "@/lib/session";
 
 // Tables editable through the generic inline-edit widget. Anything not
 // listed here is refused, even if the caller somehow supplies its name.
-const EDITABLE_TABLES = new Set([
+// Tables not listed here (e.g. av_brochures) have no rep_id column, so a
+// non-owner can never touch them through this path — see OWNER_ONLY_TABLES.
+const REP_SCOPED_TABLES = new Set([
   "av_customers",
   "av_visits",
   "av_orders",
@@ -17,8 +19,15 @@ const EDITABLE_TABLES = new Set([
   "av_travel_logs",
   "av_product_trials",
   "av_competitor_intel",
-  "av_brochures",
 ]);
+
+// Tables with no per-rep owner — shared resources that only the owner may
+// edit or delete.
+const OWNER_ONLY_TABLES = new Set(["av_brochures"]);
+
+const EDITABLE_TABLES = new Set([...REP_SCOPED_TABLES, ...OWNER_ONLY_TABLES]);
+
+const NOT_ALLOWED_MESSAGE = "Record not found, or you don't have permission to change it.";
 
 export async function updateEntry(
   table: string,
@@ -34,8 +43,22 @@ export async function updateEntry(
   }
   if (!id) throw new Error("Missing record id");
 
-  const { error } = await supabaseAdmin.from(table).update(data).eq("id", id);
+  if (session.role !== "owner") {
+    if (OWNER_ONLY_TABLES.has(table)) {
+      throw new Error(NOT_ALLOWED_MESSAGE);
+    }
+  }
+
+  let query = supabaseAdmin.from(table).update(data).eq("id", id);
+  if (session.role !== "owner" && REP_SCOPED_TABLES.has(table)) {
+    query = query.eq("rep_id", session.userId);
+  }
+
+  const { data: updated, error } = await query.select("id");
   if (error) throw new Error(error.message);
+  if (!updated || updated.length === 0) {
+    throw new Error(NOT_ALLOWED_MESSAGE);
+  }
 
   for (const path of revalidate) {
     revalidatePath(path);
@@ -52,8 +75,20 @@ export async function deleteEntry(table: string, id: string, revalidate: string[
   }
   if (!id) throw new Error("Missing record id");
 
-  const { error } = await supabaseAdmin.from(table).delete().eq("id", id);
+  if (session.role !== "owner" && OWNER_ONLY_TABLES.has(table)) {
+    throw new Error(NOT_ALLOWED_MESSAGE);
+  }
+
+  let query = supabaseAdmin.from(table).delete().eq("id", id);
+  if (session.role !== "owner" && REP_SCOPED_TABLES.has(table)) {
+    query = query.eq("rep_id", session.userId);
+  }
+
+  const { data: deleted, error } = await query.select("id");
   if (error) throw new Error(error.message);
+  if (!deleted || deleted.length === 0) {
+    throw new Error(NOT_ALLOWED_MESSAGE);
+  }
 
   for (const path of revalidate) {
     revalidatePath(path);
