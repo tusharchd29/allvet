@@ -30,29 +30,32 @@ export default async function CustomerDetailPage({
 
   if (!customer) notFound();
 
-  const { data: visits } = await supabaseAdmin
-    .from("av_visits")
-    .select("id, visit_date, purpose, discussion_summary")
-    .eq("customer_id", id)
-    .order("visit_date", { ascending: false });
+  // These three don't depend on each other, so run them in parallel rather
+  // than paying for three round trips back to back.
+  const [{ data: visits }, { data: orders }, { data: contacts }] = await Promise.all([
+    supabaseAdmin
+      .from("av_visits")
+      .select("id, visit_date, purpose, discussion_summary")
+      .eq("customer_id", id)
+      .order("visit_date", { ascending: false }),
+    supabaseAdmin
+      .from("av_orders")
+      .select("id, product, quantity, amount, status, created_at, payment_due_date, notes")
+      .eq("customer_id", id)
+      .order("created_at", { ascending: false }),
+    supabaseAdmin
+      .from("av_customer_contacts")
+      .select("id, name, role, phone")
+      .eq("customer_id", id)
+      .order("created_at", { ascending: true }),
+  ]);
 
-  const { data: orders } = await supabaseAdmin
-    .from("av_orders")
-    .select("id, product, quantity, amount, status, created_at, payment_due_date, notes")
-    .eq("customer_id", id)
-    .order("created_at", { ascending: false });
-
+  // This one genuinely depends on the order IDs above, so it stays after.
   const orderIds = (orders ?? []).map((o) => o.id);
   const { data: orderItemCounts } = orderIds.length
     ? await supabaseAdmin.from("av_order_items").select("order_id").in("order_id", orderIds)
     : { data: [] as { order_id: string }[] };
   const ordersWithItems = new Set((orderItemCounts ?? []).map((i) => i.order_id));
-
-  const { data: contacts } = await supabaseAdmin
-    .from("av_customer_contacts")
-    .select("id, name, role, phone")
-    .eq("customer_id", id)
-    .order("created_at", { ascending: true });
 
   return (
     <div>

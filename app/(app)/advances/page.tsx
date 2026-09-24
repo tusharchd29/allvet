@@ -22,9 +22,6 @@ export default async function AdvancesPage() {
   const repId = getRepScope(session);
   const customersQuery = supabaseAdmin.from("av_customers").select("id, name").order("name");
   if (repId) customersQuery.eq("rep_id", repId);
-  const { data: customers } = await customersQuery;
-
-  const { reps: repBalances, entries: repAdvanceEntries } = await getRepAdvanceReconciliation(session);
 
   const claimsQuery = supabaseAdmin
     .from("av_rep_claims")
@@ -32,7 +29,36 @@ export default async function AdvancesPage() {
     .order("created_at", { ascending: false })
     .limit(100);
   if (repId) claimsQuery.eq("rep_id", repId);
-  const { data: claimRows } = await claimsQuery;
+
+  const repUsersQuery =
+    session.role === "owner"
+      ? supabaseAdmin.from("av_users").select("id, name").eq("role", "rep").order("name")
+      : null;
+
+  const advancesQuery = supabaseAdmin
+    .from("av_advances")
+    .select("id, amount, status, created_at, av_customers(name)")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (repId) advancesQuery.eq("rep_id", repId);
+
+  // None of these five depend on each other's results, so run them
+  // together instead of one round trip at a time.
+  const [
+    { data: customers },
+    { reps: repBalances, entries: repAdvanceEntries },
+    { data: claimRows },
+    repUsersRes,
+    { data: advances },
+  ] = await Promise.all([
+    customersQuery,
+    getRepAdvanceReconciliation(session),
+    claimsQuery,
+    repUsersQuery ?? Promise.resolve({ data: null }),
+    advancesQuery,
+  ]);
+  const repUsers = repUsersRes?.data ?? null;
+
   const claimsByRep = new Map<string, Claim[]>();
   for (const c of claimRows ?? []) {
     const list = claimsByRep.get(c.rep_id) ?? [];
@@ -45,18 +71,6 @@ export default async function AdvancesPage() {
     });
     claimsByRep.set(c.rep_id, list);
   }
-  const { data: repUsers } =
-    session.role === "owner"
-      ? await supabaseAdmin.from("av_users").select("id, name").eq("role", "rep").order("name")
-      : { data: null };
-
-  const advancesQuery = supabaseAdmin
-    .from("av_advances")
-    .select("id, amount, status, created_at, av_customers(name)")
-    .order("created_at", { ascending: false })
-    .limit(50);
-  if (repId) advancesQuery.eq("rep_id", repId);
-  const { data: advances } = await advancesQuery;
 
   return (
     <div>

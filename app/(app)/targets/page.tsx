@@ -37,22 +37,22 @@ export default async function TargetsPage() {
     reps = [{ id: session.userId, name: session.name }];
   }
 
-  // A target carries forward month to month until the owner sets a new one
-  // — see lib/targets.ts. "This month" here is always the current calendar
-  // month, not whatever range the global date filter might have set
-  // elsewhere, since a target is inherently a monthly figure.
-  const effectiveTargets = await getEffectiveTargets(
-    repId ? [repId] : reps.map((r) => r.id),
-    monthStartDate,
-  );
-
   const ordersQuery = supabaseAdmin
     .from("av_orders")
     .select("rep_id, amount, status, created_at")
     .eq("status", "fulfilled")
     .gte("created_at", monthStartDate);
   if (repId) ordersQuery.eq("rep_id", repId);
-  const { data: orders } = await ordersQuery;
+
+  // A target carries forward month to month until the owner sets a new one
+  // — see lib/targets.ts. "This month" here is always the current calendar
+  // month, not whatever range the global date filter might have set
+  // elsewhere, since a target is inherently a monthly figure.
+  // Neither of these depends on the other, so run them together.
+  const [effectiveTargets, { data: orders }] = await Promise.all([
+    getEffectiveTargets(repId ? [repId] : reps.map((r) => r.id), monthStartDate),
+    ordersQuery,
+  ]);
 
   const fulfilledByRep = new Map<string, number>();
   for (const o of orders ?? []) {
