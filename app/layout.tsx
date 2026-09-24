@@ -25,7 +25,7 @@ export default function RootLayout({
           src="/peacock-feather.webp"
           alt=""
           aria-hidden="true"
-          className="fixed -bottom-10 -right-16 w-[280px] sm:w-[420px] opacity-[0.22] -z-10 pointer-events-none select-none"
+          className="fixed -bottom-10 -right-16 w-[280px] sm:w-[420px] opacity-[0.32] -z-10 pointer-events-none select-none"
         />
         {children}
       </body>
