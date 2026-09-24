@@ -18,10 +18,10 @@ function NavLink({ item, pathname, iconClassName }: { item: NavItem; pathname: s
       href={item.href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm transition-colors",
+        "flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm transition-colors border-l-2",
         active
-          ? "bg-[var(--offwhite)] text-[var(--ink)] font-medium"
-          : "text-[var(--ink)] hover:bg-[var(--offwhite)]",
+          ? "bg-[var(--offwhite)] text-[var(--ink)] font-medium border-[var(--saffron)]"
+          : "text-[var(--ink)] hover:bg-[var(--offwhite)] border-transparent",
       )}
     >
       <Icon name={item.icon} size={17} className={active ? "text-[var(--ink)]" : iconClassName} />
