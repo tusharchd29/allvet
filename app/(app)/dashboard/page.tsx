@@ -19,7 +19,7 @@ import { parseDateRange } from "@/lib/date-range";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { redirect } from "next/navigation";
 import { MapView } from "../map/MapView";
-import { DailyQuote } from "@/components/DailyQuote";
+import { PeacockFeather } from "@/components/PeacockFeather";
 
 export const dynamic = "force-dynamic";
 
@@ -49,9 +49,8 @@ export default async function DashboardPage({
             ? "Here's how the whole team is doing"
             : "Here's your day at a glance"
         }
+        action={<PeacockFeather size={26} />}
       />
-
-      <DailyQuote />
 
       <DateRangeFilter />
 

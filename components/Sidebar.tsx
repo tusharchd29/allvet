@@ -6,6 +6,7 @@ import { EVERYDAY_NAV, GROWTH_NAV, type NavItem } from "./nav-config";
 import { Icon } from "./icon";
 import { cn } from "@/lib/utils";
 import type { Session } from "@/lib/session";
+import { PeacockFeather } from "./PeacockFeather";
 
 function isActive(pathname: string, href: string) {
   return pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
@@ -39,7 +40,7 @@ export function Sidebar({ session }: { session: Session }) {
         <div className="w-9 h-9 rounded-xl bg-[var(--teal)] flex items-center justify-center text-white font-bold text-sm">
           AV
         </div>
-        <div>
+        <div className="flex-1">
           <div className="font-semibold text-[var(--ink)] leading-tight">
             Allvet
           </div>
@@ -47,6 +48,7 @@ export function Sidebar({ session }: { session: Session }) {
             Field Ops
           </div>
         </div>
+        <PeacockFeather size={20} />
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
