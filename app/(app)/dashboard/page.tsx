@@ -19,6 +19,7 @@ import { parseDateRange } from "@/lib/date-range";
 import { DateRangeFilter } from "@/components/DateRangeFilter";
 import { redirect } from "next/navigation";
 import { MapView } from "../map/MapView";
+import { DailyQuote } from "@/components/DailyQuote";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,8 @@ export default async function DashboardPage({
             : "Here's your day at a glance"
         }
       />
+
+      <DailyQuote />
 
       <DateRangeFilter />
 

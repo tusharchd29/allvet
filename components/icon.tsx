@@ -27,6 +27,7 @@ import {
   X,
   Tags,
   UserCog,
+  Flower2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -59,6 +60,7 @@ const MAP: Record<string, LucideIcon> = {
   x: X,
   tags: Tags,
   "user-cog": UserCog,
+  flower: Flower2,
 };
 
 export function Icon({
