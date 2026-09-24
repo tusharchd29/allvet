@@ -1,29 +1,74 @@
-// A small rotating set of lines from Hindu scripture, shown on the
-// dashboard as a quiet daily touch — not tied to any one person's
-// data, just a subtle bit of texture for the app.
-export type Quote = { text: string; source: string };
+// Bhagavad Gita verses (Krishna's counsel to Arjuna), each paired with
+// a one-line business framing so they read as guidance for the day's
+// work rather than a generic quote. Shown on the dashboard.
+export type Quote = { text: string; source: string; business: string };
 
 export const QUOTES: Quote[] = [
-  { text: "You have the right to perform your duty, but never to the fruits of your actions.", source: "Bhagavad Gita 2.47" },
-  { text: "The soul is neither born, and nor does it die.", source: "Bhagavad Gita 2.20" },
-  { text: "A person is made by their faith. As they believe, so they are.", source: "Bhagavad Gita 17.3" },
-  { text: "Set thy heart upon thy work, but never on its reward.", source: "Bhagavad Gita 2.47" },
-  { text: "Lead me from the unreal to the real, from darkness to light, from death to immortality.", source: "Brihadaranyaka Upanishad 1.3.28" },
-  { text: "That which pervades the universe, know that to be indestructible.", source: "Bhagavad Gita 2.17" },
-  { text: "Truth is one; the wise call it by many names.", source: "Rig Veda 1.164.46" },
-  { text: "As a man casts off worn-out garments and puts on new ones, so the soul casts off its worn-out body.", source: "Bhagavad Gita 2.22" },
-  { text: "Let your object be the acquisition of true knowledge, and let all your actions be dedicated to that end.", source: "Isha Upanishad" },
-  { text: "The mind is restless, but it is subdued by practice and detachment.", source: "Bhagavad Gita 6.35" },
-  { text: "May all be happy, may all be free from illness. May all see what is auspicious, may no one suffer.", source: "Brihadaranyaka Upanishad" },
-  { text: "He who sees all beings in his own self and his own self in all beings loses all fear.", source: "Isha Upanishad" },
-  { text: "From joy springs all creation, by joy it is sustained, toward joy it proceeds.", source: "Taittiriya Upanishad" },
-  { text: "There is neither this shore, nor that shore, nor any shore — there is only the ocean.", source: "Upanishads" },
-  { text: "The wise see knowledge and action as one; they see truly.", source: "Bhagavad Gita 5.4" },
+  {
+    text: "You have the right to perform your duty, but never to the fruits of your actions.",
+    source: "Bhagavad Gita 2.47",
+    business: "Focus on the visit, the call, the order in front of you — not just the target number.",
+  },
+  {
+    text: "Set thy heart upon thy work, but never on its reward.",
+    source: "Bhagavad Gita 2.47",
+    business: "Do the work well today; let the month's numbers follow from that.",
+  },
+  {
+    text: "The mind is restless, but it is subdued by practice and detachment.",
+    source: "Bhagavad Gita 6.35",
+    business: "A slow day or a lost order doesn't need to shake the whole week — steady practice wins territory.",
+  },
+  {
+    text: "A person is made by their faith. As they believe, so they are.",
+    source: "Bhagavad Gita 17.3",
+    business: "Walk into every customer meeting believing in what you're selling — it shows.",
+  },
+  {
+    text: "Let right deeds be thy motive, not the fruit which comes from them.",
+    source: "Bhagavad Gita 2.47",
+    business: "Serve the customer honestly first — the repeat order is a byproduct, not the goal.",
+  },
+  {
+    text: "There is nothing in this world so purifying as knowledge.",
+    source: "Bhagavad Gita 4.38",
+    business: "Know your products and your customer's real need — that's what actually closes deals.",
+  },
+  {
+    text: "The wise see knowledge and action as one; they see truly.",
+    source: "Bhagavad Gita 5.4",
+    business: "Planning and doing aren't separate — a good route plan is only useful once you're out on it.",
+  },
+  {
+    text: "He who has no attachments can really love others, for his love is pure and divine.",
+    source: "Bhagavad Gita 12.13-14",
+    business: "Serve every customer the same way, whether the order is big or small today.",
+  },
+  {
+    text: "Perform your duty equipoised, abandoning all attachment to success or failure.",
+    source: "Bhagavad Gita 2.48",
+    business: "A rejected pitch is data, not defeat — move to the next visit with the same energy.",
+  },
+  {
+    text: "One who is unaffected by good or evil, and offers all he does to the whole, is wise.",
+    source: "Bhagavad Gita 2.50",
+    business: "Handle a bad month and a great month the same way: review it, learn, move forward.",
+  },
+  {
+    text: "Whatever action is performed by a great man, common men follow in his footsteps.",
+    source: "Bhagavad Gita 3.21",
+    business: "The team is watching how the top rep works, not just what they sell.",
+  },
+  {
+    text: "The soul is neither born, and nor does it die.",
+    source: "Bhagavad Gita 2.20",
+    business: "No single order defines the business — relationships built with care outlast any one deal.",
+  },
 ];
 
-// Deterministic pick for a given date so it changes once a day and is
-// the same for everyone looking at the app that day, without needing
-// to store or randomize anything.
+// Deterministic pick for a given date so the quote changes once a day
+// and is the same for everyone looking at the app that day, without
+// needing to store or randomize anything.
 export function quoteOfDay(date = new Date()): Quote {
   const start = Date.UTC(date.getUTCFullYear(), 0, 0);
   const diff = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) - start;

@@ -11,7 +11,8 @@ export function DailyQuote() {
       <Icon name="flower" size={16} className="text-[var(--saffron)] mt-0.5 shrink-0" />
       <div>
         <p className="text-sm text-[var(--ink)] italic leading-snug">&ldquo;{quote.text}&rdquo;</p>
-        <p className="text-xs text-[var(--muted)] mt-1">— {quote.source}</p>
+        <p className="text-xs text-[var(--muted)] mt-1">— Krishna, {quote.source}</p>
+        <p className="text-xs text-[var(--saffron)] mt-1.5 font-medium">{quote.business}</p>
       </div>
     </div>
   );
