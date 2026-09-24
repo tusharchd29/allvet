@@ -42,7 +42,7 @@ export default async function DashboardPage({
   return (
     <div>
       <PageHeader
-        title={`Hi ${session.name.split(" ")[0]}`}
+        title={`Hi ${session.name}`}
         subtitle={
           session.role === "owner"
             ? "Here's how the whole team is doing"

@@ -1,7 +1,18 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Suspense, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import { loginWithPin } from "./actions";
+
+function IdleNotice() {
+  const params = useSearchParams();
+  if (params.get("reason") !== "idle") return null;
+  return (
+    <p className="text-sm text-[var(--warn)] text-center mb-4 -mt-4">
+      Signed out after 5 minutes of inactivity.
+    </p>
+  );
+}
 
 export default function LoginPage() {
   const [pin, setPin] = useState("");
@@ -41,6 +52,10 @@ export default function LoginPage() {
             Enter your 4-digit PIN
           </p>
         </div>
+
+        <Suspense fallback={null}>
+          <IdleNotice />
+        </Suspense>
 
         <div className="flex justify-center gap-3 mb-2" aria-live="polite">
           {[0, 1, 2, 3].map((i) => (
