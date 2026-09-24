@@ -26,6 +26,7 @@ import {
   Pencil,
   X,
   Tags,
+  UserCog,
   type LucideIcon,
 } from "lucide-react";
 
@@ -57,6 +58,7 @@ const MAP: Record<string, LucideIcon> = {
   edit: Pencil,
   x: X,
   tags: Tags,
+  "user-cog": UserCog,
 };
 
 export function Icon({

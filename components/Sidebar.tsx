@@ -65,7 +65,7 @@ export function Sidebar({ session }: { session: Session }) {
           Growth & Oversight
         </div>
         <ul className="space-y-0.5">
-          {GROWTH_NAV.map((item) => (
+          {GROWTH_NAV.filter((item) => !item.ownerOnly || session.role === "owner").map((item) => (
             <li key={item.href}>
               <NavLink item={item} pathname={pathname} iconClassName="text-[var(--seafoam)]" />
             </li>

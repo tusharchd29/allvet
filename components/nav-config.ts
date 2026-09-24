@@ -25,6 +25,7 @@ export const GROWTH_NAV: NavItem[] = [
   { href: "/competitor-intel", label: "Competitor Intel", icon: "binoculars" },
   { href: "/brochures", label: "Brochures", icon: "book-open" },
   { href: "/reports", label: "Reports", icon: "bar-chart-3" },
+  { href: "/team", label: "Team", icon: "user-cog", ownerOnly: true },
 ];
 
 export const MOBILE_PRIMARY: NavItem[] = [

@@ -1,10 +1,14 @@
 import Link from "next/link";
+import { getSession } from "@/lib/session";
 import { GROWTH_NAV } from "@/components/nav-config";
 import { Icon } from "@/components/icon";
 import { PageHeader } from "@/components/PageHeader";
 import { Card } from "@/components/Card";
 
-export default function MorePage() {
+export default async function MorePage() {
+  const session = await getSession();
+  const isOwner = session?.role === "owner";
+
   return (
     <div>
       <PageHeader title="More" />
@@ -14,7 +18,9 @@ export default function MorePage() {
           ...GROWTH_NAV,
           { href: "/tours", label: "Tour Plan", icon: "calendar" },
           { href: "/travel", label: "Travel Log", icon: "car" },
-        ].map(
+        ]
+          .filter((item) => !("ownerOnly" in item) || !item.ownerOnly || isOwner)
+          .map(
           (item) => (
             <Link key={item.href} href={item.href}>
               <Card className="flex items-center justify-between">
