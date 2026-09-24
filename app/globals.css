@@ -55,7 +55,7 @@ a {
 }
 
 .card {
-  background: var(--white);
+  background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--border);
   border-radius: 14px;
 }
